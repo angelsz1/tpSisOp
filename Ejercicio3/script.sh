@@ -96,6 +96,11 @@ if [[ $acciones =~ "publicar" ]];then
     if [[ $6 = "1" ]]; then
         echo "La accion publicar requiere un directorio de publicacion"
         exit 1
+    else
+        if [[ ! -r $6 ]]; then
+            echo "No tienes permisos de lectura sobre la ruta $6"
+            exit 1
+        fi
     fi
     if [[ ! -d $6 ]]; then
         mkdir $6
