@@ -1,11 +1,30 @@
 #! /bin/bash
 
+function validarParametros(){
+    if [[ $1 != "--ruta" ]]; then
+        echo ""
+        echo "Parametro deconocido"
+        echo "Ejemplo de uso: bash ejercicio4 --ruta <folder>"
+        exit 1
+    fi
+
+    if [[ $2 != 2 ]]; then
+        echo ""
+        echo "Cantidad de parametros incorrecta, deben ser 2"
+        echo "Ejemplo de uso: bash ejercicio4 --ruta <folder>"
+        echo ""
+        exit 1
+    fi
+}
+
 if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]
 then
     echo "Escribir ayuda"
     exit 0
 fi
-#validar parametros
+
+validarParametros $1 $#
+
 if [[ $1 = "--ruta" ]]
 then
     ruta="$2"
