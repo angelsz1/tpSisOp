@@ -1,0 +1,384 @@
+#!/bin/bash
+
+# Punto 1 (Promedio de tiempo de las llamadas realizadas por dia)
+# Punto 2 (Promedio por usuario y cantidad de tiempo por dia del usuario)
+# Punto 3 (Los 3 usuarios con mas llamadas en la semana)
+# Punto 4 (Numero de llamadas que no superan la media del tiempo del dia)
+# Punto 5 (El nombre de usuario quien tiene mas cantidad de llamadas con duracion por debajo de la media semanal)
+
+# Funciones
+
+ordenarArchivoEnVariable(){
+
+    archivoOrdenado=$(cat "$1" | awk '
+
+    BEGIN { FS="-+|:+| "}
+
+    {
+        print $1"-"$2"-"$3" "$4":"$5":"$6"-"$7
+
+    }' | sort -k 1,1 -k 2,2 -k 3,3 -k 7,7 -k 4,4 -k 5,5 -k 6)
+
+}
+
+
+# Verificamos si el usuario quiere ingresar al apartado de ayuda
+if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] || [[ $1 == "-?" ]]; then
+    echo "Ayuda del Ejercicio 2"
+
+    echo ""
+
+    echo "Para ejecutar correctamente este script deberas invocarlo de la siguiente forma:"
+        
+    echo "bash $0 --logs path"
+
+    echo ""
+
+    echo "path: La ruta al archivo de registros de llamadas que quieras analizar"
+
+    echo ""
+
+    echo "Si tu archivo contienes espacios deberas escribir el nombre de tu archivo usando comillas:"
+
+    echo "bash $0 --logs 'tu archivo'"
+
+    echo ""
+
+    # echo "--logs: Ruta al archivo que contiene los registros de las llamadas telefonicas."
+
+    echo "Formato de este archivo:"
+
+    echo "YYYY-MM-DD HH:mm:ss-username"
+    echo "YYYY-MM-DD HH:mm:ss-username"
+    
+    echo ""
+    
+    echo "Donde la primer linea corresponde al inicio de la llamada y la segunda linea corresponde al fin de la llamada"
+
+    echo ""
+
+    echo "Ejemplo de una llamada correcta al script:"
+
+    echo ""
+
+    echo "bash $0 --logs ./logs/llamadas.txt"
+
+    echo ""
+
+    echo "Esperamos que te haya sido util :)"
+
+    exit 0
+fi
+
+# Verificamos la cantidad de parametros
+if [[ $# != 2 ]]; then
+    echo "Cantidad de parametros incorrecta, deben ser 2"
+    echo ""
+    echo "bash ejercicio2 --logs <file>"
+    echo ""
+    exit 1
+fi
+
+# Verificamos que se hayan mandado los parametros correspondientes
+if [[ $1 != "--logs" ]]; then
+    echo "Parametros invalidos"
+    echo ""
+    echo "bash ejercicio2 --logs <file>"
+    echo ""
+    exit 1
+fi
+
+# Verificamos que el archivo a procesar sea un fichero regular
+if [[ ! -f  $2 ]]
+then
+	echo "El archivo no es un fichero regular";
+	exit 1;
+fi
+
+# Verificamos que tengan los permisos de lectura correspondientes
+if [[ ! -r  $2 ]]
+then
+	echo "No hay permisos de lectura";
+	exit 1;
+fi
+
+ordenarArchivoEnVariable "$2"
+
+declare -A mapEpochs
+
+# Punto 1 (Promedio de tiempo de las llamadas realizadas por dia)
+declare -A cantidadLlamadasPorDia
+declare -A tiempoDeLlamadaPorDia # En Epochs
+declare -A mediaDeTiempoPorDia # Punto 4
+
+# Punto 2 (Cantidad de Tiempo por dia por usuario)
+declare -A tiempoDeLlamadaPorDiaPorUsuario # key (2022-08-26 facu)
+declare -A cantidadLlamadasPorDiaPorUsuario # key (2022-08-26 facu)
+# Al final se recorren y se van mostrando los promedios de cada usuario
+
+# Punto 3 (Los 3 usuarios con mas llamadas en la semana)
+declare -A cantidadLlamadasPorUsuario 
+
+# Punto 4 (Cantidad de llamadas que no superan la media del tiempo por dia)
+declare -A cantidadLlamadasNoSuperanMediaDiaria
+
+# Punto 5 (Usuario que tiene mas cantidad de llamadas por debajo de la media en la semana)
+cantidadLlamadasSemanal=0
+tiempoDeLlamadaSemanal=0
+declare -A tiempoDeLLamadaPorUsuarioSemanal
+
+cantidadDias=0
+diaActual=""
+
+
+while read line; do
+	
+    dia=`echo $line | cut -c1-10`
+	usuario=`echo $line | cut -c21-40`
+
+    if [ "$diaActual" != "$dia" ]; then
+        diaActual=$dia
+        ((cantidadDias+=1))
+    fi
+
+    if [ ! -z ${mapEpochs[$usuario]} ]; then
+
+        # Finaliza una llamada de este usuario ($usuario) 
+        
+        # Obtenemos la fecha desde el archivo de texto
+        fechaFin=`echo $line | cut -c1-20`
+
+        # Convertir la fecha a epoch
+        epochFin=`date -d "$fechaFin" +%s`
+
+        # Obtener la diferencia entre epochs
+        difEpochs=$(($epochFin-${mapEpochs[$usuario]}))
+
+        # Obtenemos el dia de inicio de la llamada
+        diaInicio=`date -d @${mapEpochs[$usuario]} -I`
+
+        # Sumamos el tiempo de llamada por usuario en el dia que se inicio la llamada
+        ((tiempoDeLlamadaPorDiaPorUsuario["$diaInicio $usuario"]+=$difEpochs))
+
+        # Aumentamos el tiempo de llamada por usuario en la semana
+        ((tiempoDeLLamadaPorUsuarioSemanal[$usuario]+=$difEpochs))
+
+        # Aumentamos los tiempos de llamada por dia
+        ((tiempoDeLlamadaPorDia[$diaInicio]+=$difEpochs))
+
+        # Aumentamos los tiempos de llamada semanal
+        ((tiempoDeLlamadaSemanal+=$difEpochs))
+
+        # Volvemos a colocar el map del usuario en vacio
+        mapEpochs["$usuario"]=""
+
+    else
+
+        # Comienza una llamada nueva de este usuario ($usuario) 
+        ((cantidadLlamadasPorUsuario[$usuario]+=1))
+
+        # Aumentamos la cantidad de llamadas en ese dia
+        ((cantidadLlamadasPorDia[$dia]+=1))
+
+        # Aumentamos la cantidad de llamadas semanales
+        ((cantidadLlamadasSemanal+=1))
+
+        # Sumamos la cantidad de llamadas realizadas por el usuario en el dia
+        ((cantidadLlamadasPorDiaPorUsuario["$dia $usuario"]+=1))
+
+        # Obtenemos la fecha desde el archivo de texto
+        fechaInicio=`echo $line | cut -c1-20`
+
+        # Convertimos la fecha a epoch
+        epochInicio=`date -d "$fechaInicio" +%s`
+
+        # Actualizamos el map de este usuario
+        mapEpochs[$usuario]=$epochInicio
+    fi
+
+
+done <<< "$archivoOrdenado"
+
+# Mostramos Punto 1
+echo "Punto 1. Promedio de tiempo de las llamadas realizadas por dia."
+echo ""
+
+for i in "${!tiempoDeLlamadaPorDia[@]}" 
+do
+    promedio=$((tiempoDeLlamadaPorDia[$i] / cantidadLlamadasPorDia[$i]))
+
+    # Obtenemos la media de tiempo por dia (Sirve para el Punto 4 y 5)
+    mediaDeTiempoPorDia[$i]=$promedio
+
+    
+    promedioFormateado=`date -d @"$promedio" -u +%H:%M:%S`
+    echo "Promedio el $i: $promedioFormateado"
+
+    echo "----------------------------------"
+done
+
+echo ""
+
+
+# Mostramos Punto 2
+echo "Punto 2. Promedio de tiempo y cantidad por usuario por dia."
+echo ""
+
+for i in "${!tiempoDeLlamadaPorDiaPorUsuario[@]}"
+do
+    dia=`echo $i | cut -c1-10`
+    usuario=`echo $i | cut -c12-20`
+    
+    echo "Dia: $dia | Usuario: $usuario"
+
+    promedio=$((tiempoDeLlamadaPorDiaPorUsuario[$i] / cantidadLlamadasPorDiaPorUsuario[$i]))
+    
+    promedioFormateado=`date -d @"$promedio" -u +%H:%M:%S`
+
+    echo "Promedio de tiempo: $promedioFormateado"
+    echo "Cantidad de Llamadas: ${cantidadLlamadasPorDiaPorUsuario[$i]}"
+
+    echo "----------------------------------"
+done
+
+echo ""
+
+# Mostramos Punto 3
+echo "Punto 3. Los 3 usuarios con mas llamadas en la semana."
+echo ""
+
+primerLugar=""
+segundoLugar=""
+tercerLugar=""
+
+for i in "${!cantidadLlamadasPorUsuario[@]}"
+do
+
+    if [ "$primerLugar" == ""  ]; then
+        primerLugar=$i
+    elif [ "$segundoLugar" == "" ]; then
+        segundoLugar=$i
+    elif [ "$tercerLugar" == "" ]; then
+        tercerLugar=$i
+    elif [ ${cantidadLlamadasPorUsuario[$i]} -gt ${cantidadLlamadasPorUsuario[$primerLugar]} ]; then
+        
+        # Cambiamos el tercer lugar
+        tercerLugar=$segundoLugar
+        
+        # Cambiamos el segundo lugar
+        segundoLugar=$primerLugar
+        
+        # Cambiamos el primer lugar
+        primerLugar=$i
+    
+    elif [ ${cantidadLlamadasPorUsuario[$i]} -gt ${cantidadLlamadasPorUsuario[$segundoLugar]} ]; then
+
+        # Cambiamos el tercer lugar
+        tercerLugar=$segundoLugar
+
+        # Cambiamos el segundo lugar
+        segundoLugar=$i
+    
+    elif [ ${cantidadLlamadasPorUsuario[$i]} -gt ${cantidadLlamadasPorUsuario[$tercerLugar]} ]; then
+
+        # Cambiamos el tercer lugar
+        tercerLugar=$i
+
+    fi
+
+done
+
+echo "TOP 1 => $primerLugar con ${cantidadLlamadasPorUsuario[$primerLugar]} llamadas en la semana"
+
+if [[ "$segundoLugar" == "" ]]; then
+    echo "No existe TOP 2."
+else
+    echo "TOP 2 => $segundoLugar con ${cantidadLlamadasPorUsuario[$segundoLugar]} llamadas en la semana"
+fi
+
+if [[ "$tercerLugar" == "" ]]; then
+    echo "No existe TOP 3."
+else
+    echo "TOP 3 => $tercerLugar con ${cantidadLlamadasPorUsuario[$tercerLugar]} llamadas en la semana"
+fi
+
+echo ""
+
+
+while read line; do
+
+        dia=`echo $line | cut -c1-10`
+	    usuario=`echo $line | cut -c21-40`
+
+        if [ ! -z ${mapEpochs[$usuario]} ]; then
+
+        # Finaliza una llamada de este usuario ($usuario) 
+
+        # Obtenemos la fecha desde el archivo de texto
+        fechaFin=`echo $line | cut -c1-20`
+
+        # Convertir la fecha a epoch
+        epochFin=`date -d "$fechaFin" +%s`
+
+        # Obtener la diferencia entre epochs
+        difEpochs=$(($epochFin-${mapEpochs[$usuario]}))
+
+        # Obtenemos el dia de inicio de la llamada
+        diaInicio=`date -d @${mapEpochs[$usuario]} -I`
+
+        # Nos fijamos si tenemos que incrementar la cantidad de llamadas que no superan la media diaria
+        if [ $difEpochs -le ${mediaDeTiempoPorDia[$diaInicio]} ]; then
+            ((cantidadLlamadasNoSuperanMediaDiaria[$diaInicio]+=1))
+        fi
+
+        # Volvemos a colocar el map del usuario en vacio
+        mapEpochs["$usuario"]=""
+
+    else
+
+        # Comienza una llamada nueva de este usuario ($usuario) 
+
+        # Obtenemos la fecha desde el archivo de texto
+        fechaInicio=`echo $line | cut -c1-20`
+
+        # Convertimos la fecha a epoch
+        epochInicio=`date -d "$fechaInicio" +%s`
+
+        # Actualizamos el map de este usuario
+        mapEpochs[$usuario]=$epochInicio
+    fi
+
+done <<< "$archivoOrdenado"
+
+# Mostramos Punto 4
+echo "Punto 4. Cuantas llamadas no superan la media de tiempo por dia"
+echo ""
+
+for i in "${!cantidadLlamadasNoSuperanMediaDiaria[@]}"
+do
+    echo "Dia: $i => ${cantidadLlamadasNoSuperanMediaDiaria[$i]} llamadas que no superan la media de ese dia."
+done
+
+echo ""
+
+# Mostramos Punto 5
+echo "Punto 5. El usuario que tiene mas cantidad de llamadas por debajo de la media en la semana"
+echo ""
+
+maximo="0"
+usuario=""
+promedioCantidadLLamadasSemanal=$((cantidadLlamadasSemanal / cantidadDias))
+
+for i in "${!cantidadLlamadasPorUsuario[@]}"
+do
+
+    if [[ ${cantidadLlamadasPorUsuario[$i]} -le $promedioCantidadLLamadasSemanal ]] && [[ ${cantidadLlamadasPorUsuario[$i]} -gt $maximo ]]; then
+        maximo=${cantidadLlamadasPorUsuario[$i]}
+        usuario=$i
+    fi
+
+done
+
+echo "$usuario con $maximo llamadas en la semana"
+
+echo ""
