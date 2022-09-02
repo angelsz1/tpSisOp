@@ -1,16 +1,19 @@
+#! /bin/bash
+
 if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]
 then
     echo "Escribir ayuda"
     exit 0
 fi
-
+#validar parametros
 if [[ $1 = "--ruta" ]]
 then
     ruta="$2"
 fi
 
 cat $ruta |
-  awk 'BEGIN{ estoyEnComentarioMultiple=0 }{
+  awk '{
+    gsub(/ /,"")
 
     if(estoyEnComentarioMultiple == 0) {
         posicionAperturaComentarioMultiple = index($0, "/*") 
