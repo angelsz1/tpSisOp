@@ -1,5 +1,5 @@
 1. El objetivo del script es calcular la cantidad de lineas, caracteres de un archivo o su maxima cantidad de caracteres en una linea.
-2. Recibe el path del archivo a analizar y la accion a realizar (L, C o M).
+2. Recibe el path del archivo a analizar en $1 y la accion a realizar (L, C o M) en $2.
 3. Si la cantidad de parámetros del script es menor a 2 llama a la función ErrorS
     
     Si el parametro 1 no posee permiso de lectura para analizar el archivo de texto se llama a la funcion ErrorP para indicarlo
