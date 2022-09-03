@@ -1,8 +1,31 @@
-if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]
-then
-    echo "Escribir ayuda"
-    exit 0
-fi
+#! /bin/bash
+
+function validarParametros(){
+    if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]; then
+        echo "Para ejecutar este script debes hacerlo de la siguiente forma: bash ejercicio4 --ruta<ruta del script> --extensiones <lista de las extensiones de los archivos a analizar, seguidas por coma>"
+        echo "Otra forma para ejecutar este script: ./ejercicio4 --ruta<ruta del script> --extensiones<lista de las extensiones de los archivos a analizar, seguidas por coma>"
+        echo "Este script te dara la cantidad de lineas de comentarios y de codigo y un porcetaje de las mismas, sobre el total de lineas de todos los archivos."
+    
+        exit 0
+    fi
+
+    if [[ $1 != "--ruta" ]]; then
+        echo ""
+        echo "Parametro deconocido"
+        echo "Ejemplo de uso: bash ejercicio4 --ruta <folder>"
+        exit 1
+    fi
+
+    if [[ $2 != 3 ]]; then
+        echo ""
+        echo "Cantidad de parametros incorrecta, deben ser: --ruta<ruta del script> --extensiones <lista de las extensiones de los archivos a analizar, seguidas por coma>"
+        echo "Ejemplo de uso: bash ejercicio4 --ruta<folder> --ext <lita de extensiones>"
+        echo ""
+        exit 1
+    fi
+}
+
+validarParametros $1 $#
 
 if [[ $1 = "--ruta" ]]
 then
@@ -10,8 +33,8 @@ then
 fi
 
 cat $ruta |
-  awk 'BEGIN{ estoyEnComentarioMultiple=0 }{
-
+  awk '{
+    gsub(/ /,"")
     if(estoyEnComentarioMultiple == 0) {
         posicionAperturaComentarioMultiple = index($0, "/*") 
         if(posicionAperturaComentarioMultiple == 1) {
@@ -21,7 +44,6 @@ cat $ruta |
             estoyEnComentarioMultiple = 1
         }
     }
-
     if(estoyEnComentarioMultiple == 0) {
         posicionComentarioSimple = index($0, "//") 
         if(posicionComentarioSimple == 1) {
@@ -33,7 +55,6 @@ cat $ruta |
             codigos++
         }
     }
-
     if(estoyEnComentarioMultiple == 1) {
         posicionCierreComentarioMultiple = index($0, "*/") 
         if(posicionCierreComentarioMultiple >= 1) {
@@ -42,12 +63,10 @@ cat $ruta |
         } else {
             comentarios++
         }
-
         if(posicionCierreComentarioMultiple !=0 && posicionCierreComentarioMultiple+1 < length($0)) {
             codigos++
         }
     }
-
 } END {
     print "Cantidad comentarios: " comentarios
     print "Cantidad codigo: " codigos
