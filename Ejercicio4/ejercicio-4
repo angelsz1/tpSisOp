@@ -2,8 +2,8 @@
 
 function ejemploDeUso(){
     echo "Ejemplo de uso:"
-    echo "1) bash ejercicio4 --ruta <ruta> --ext <extensiones>"
-    echo "2) ./ejercicio4 --ruta <ruta> --ext <extensiones>"
+    echo "1) bash $0 --ruta <ruta> --ext <extensiones>"
+    echo "2) ./$0 --ruta <ruta> --ext <extensiones>"
     echo ""
     echo "• ruta: ruta del directorio a analizar"
     echo "• extensiones: lista de las extensiones de los archivos a analizar, seguidas por coma"
