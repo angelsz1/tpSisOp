@@ -1,0 +1,14 @@
+Lotes de prueba
+
+notas_1.txt
+Contiene todos los casos posibles de notas sin nota de final distribuidos en las diferentes materias
+En resultado_esperado.csv estan las notas analizadas a mano una por una para corroborar la salida del script.
+
+notas_2.txt
+Contiene una sola materia para testear notas una por una y ver si procesa bien
+
+notas_3.txt
+Contiene casos solo con nota de final donde solamente tiene que sumar las personas que recursan
+
+Como no indicaba que nombre tenia que tener el archivo de salida json, elegi que sea la fecha actual en la que se ejecuto el script + salida + .json. En caso de que ya exista un archivo con el mismo nombre va a generar uno agregandole una numeracion.
+Tuve en cuenta casos sin sentido por eso me quedaron algunos IFs un poco grandes, por ejemplo, si tenia ambos parciales promocionados o no se presento a ninguno no tiene sentido que tenga nota de recuperatorio.
