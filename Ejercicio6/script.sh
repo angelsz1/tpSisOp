@@ -1,61 +1,150 @@
 #! /bin/bash
 #crear mi propia papelera de reciclaje
 if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]; then
-    #TODO: mostrar ayuda
+    ayuda
     exit 0
 fi
 > script.log
+logPath="$HOME/papelera.zip/log.txt"
+papeleraPath="$HOME/papelera.zip"
 #funciones para cada opcion
 listar(){ #listo
-    cat /$HOME/papelera.zip/log.txt
+    cat $logPath | cut -d " " -f -2 
 }
 
 vaciar(){ #listo
-    rm -r /$HOME/papelera.zip
-    mkdir /$HOME/papelera.zip
-    > /$HOME/papelera.zip/log.txt
+    rm -r $papeleraPath
+    mkdir $papeleraPath
+    > $logPath
+}
+ayuda(){
+    echo "Sintaxis : $0 ACCION [archivo/dir]"
+    echo "Acciones : "
+    echo "--listar: Muestra el contenido de la papelera de reciclaje"
+    echo "--eliminar [archivo/dir]: Envia a la papelera el archivo/directorio pasado por parametro"
+    echo "--borrar [archivo/dir]: Elimina de la papelera (definitivamente) al archivo o directorio pasado por parametro. El mismo debe estar en la papelera"
+    echo "--vaciar: Vacia la papelera"
+    echo "Ejemplo: $0 --eliminar ../archivo"
 }
 
-recuperar(){
-    if [[ -f /$HOME/papelera.zip/$1 ]]; then
-        cp /$HOME/papelera.zip/$1 `cat /$HOME/papelera.zip/log.txt | grep $1 | cut -d " " -f 2`
-        rm /$HOME/papelera.zip/$1
-        sed -i "/$1/d" /$HOME/papelera.zip/log.txt
+recuperar(){ #listo
+
+    if [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -gt 1 ]]; then
+        grep $1 < $logPath | awk '{printf "%d - %s %s\n", NR, $1, $2}'
+        echo "Cual queres recuperar?"
+        read archNum
+        nuevoNombre=`grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) printf "%s|%d" , $1, $3}'` 
+        IDarch=`grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $3}'`
+        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 
+
+        #si es un file
+        if [[ -f $papeleraPath/$1 ]]; then
+            cp $papeleraPath/$1 `grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $2}'`
+            rm $papeleraPath/$1 
+        #si es un dir
+        elif [[ -d $papeleraPath/$1 ]]; then 
+            cp -r $papeleraPath/$1 `grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $2}'` 
+            rm -r $papeleraPath/$1 
+        fi
+
+        sed -i "/$IDarch/d" $logPath
+
+
+    elif [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -eq 1 ]]; then
+        nuevoNombre=`grep $1 < $logPath | awk '{printf "%s|%d" , $1, $3}'` #consigo el nuevo nombre del archivo dentro de la papelera
+        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 #le cambio el nombre al original
+
+        #si es un file
+        if [[ -f $papeleraPath/$1 ]]; then
+            cp $papeleraPath/$1 `grep $1 < $logPath | awk '{print $2}'` 
+            rm $papeleraPath/$1 
+        #si es un dir
+        elif [[ -d $papeleraPath/$1 ]]; then 
+            cp -r $papeleraPath/$1 `grep $1 < $logPath | awk '{print $2}'` 
+            rm -r $papeleraPath/$1 
+        fi
+
+        sed -i "/$1/d" $logPath    #borro la linea del log
     else
-        echo "El archivo no existe en la papelera"
+        echo "El archivo $1 no se encuentra en la papelera de reciclaje"
+        exit 1;
     fi
 }
 
 eliminar(){ #listo
-    logPath="/$HOME/papelera.zip/log.txt"
-    cp $1 /$HOME/papelera.zip
+    if [[ -d $1 ]]; then
+        cp -r $1 $papeleraPath
+    else
+        cp $1 $papeleraPath
+    fi
     pathArchivo=$(realpath $1);
     nombreArchivo=$(basename $1);
-    echo "$nombreArchivo  $(dirname $pathArchivo)" >> $logPath
-    rm $1
+    dateRand=$(date +%s)$RANDOM
+    mv $papeleraPath/$nombreArchivo "$papeleraPath/$nombreArchivo|$dateRand" #le cambio el nombre al archivo para que no se repita
+    echo "$nombreArchivo $(dirname $pathArchivo) $dateRand" >> $logPath
+    if [[ -d $1 ]]; then
+        rm -r $1
+    else
+        rm $1
+    fi
 }
 
 borrar(){
-    echo TODOborrar
+    if [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -gt 1 ]]; then
+        grep $1 < $logPath | awk '{printf "%d - %s %s\n", NR, $1, $2}'
+        echo "Cual queres borrar?"
+        read archNum
+        nuevoNombre=`cat $logPath | grep $1 | awk -v var=$archNum '{if(NR == var) printf "%s|%d" , $1, $3}'` 
+        IDarch=`grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $3}'`
+        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 
+
+        #si es un file
+        if [[ -f $papeleraPath/$1 ]]; then
+            rm $papeleraPath/$1 
+        #si es un dir
+        elif [[ -d $papeleraPath/$1 ]]; then 
+            rm -r $papeleraPath/$1 
+        fi
+
+        sed -i "/$IDarch/d" $logPath
+
+
+    elif [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -eq 1 ]]; then
+        nuevoNombre=`cat $logPath | grep $1 | awk '{printf "%s|%d" , $1, $3}'` 
+        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 
+
+        #si es un file
+        if [[ -f $papeleraPath/$1 ]]; then
+            rm $papeleraPath/$1 
+        #si es un dir
+        elif [[ -d $papeleraPath/$1 ]]; then 
+            rm -r $papeleraPath/$1 
+        fi
+
+        sed -i "/$1/d" $logPath    #borro la linea del log
+    else
+        echo "El archivo $1 no se encuentra en la papelera de reciclaje"
+        exit 1;
+    fi
 }
 
 
 
 #si no existe la papelera, la creo
-if [[ -d $HOME/papelera.zip ]]
+if [[ -d $papeleraPath ]]
 then
     echo "La papelera ya existe" >> script.log
 else
-    mkdir $HOME/papelera.zip
+    mkdir $papeleraPath
     echo "La papelera se ha creado" >> script.log
 fi
 
 #si no existe el log, lo creo
-if [[ -f $HOME/papelera.zip/log.txt ]]
+if [[ -f $logPath ]]
 then
     echo "El log ya existe" >> script.log
 else
-    touch $HOME/papelera.zip/log.txt
+    touch $logPath
     echo "El log se ha creado" >> script.log
 fi
 
@@ -72,9 +161,27 @@ if [[ $1 = "--listar" ]]; then #sin params
 elif [[ $1 = "--vaciar" ]]; then #sin params
     vaciar
 elif [[ $1 = "--recuperar" ]]; then #param: archivo
-    recuperar $2
+    if [[ $2 != "" ]]; then
+        recuperar $2
+    else
+        echo "Debe proporcionar un archivo/directorio a recuperar"
+        ayuda
+        exit 1;
+    fi
 elif [[ $1 = "--eliminar" ]]; then #param: archivo
-    eliminar $2
+    if [[ -f $2 || -d $2 ]]; then
+        eliminar $2
+    else
+        echo "$2 no es un parametro valido"
+        ayuda
+        exit 1;
+    fi
 elif [[ $1 = "--borrar" ]]; then #param: archivo
-    borrar $2
+    if [[ $2 != "" ]]; then
+        borrar $2
+    else
+        echo "Debe proporcionar un archivo/directorio a borrar"
+        ayuda
+        exit 1;
+    fi
 fi
