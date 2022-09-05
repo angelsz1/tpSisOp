@@ -5,7 +5,7 @@ if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]; then
     exit 0
 fi
 > script.log
-logPath="$HOME/papelera.zip/log.txt"
+logPath="$HOME/papelera.zip/logPapeleraAMAVF.txt" #iniciales del grupo, para chequear que sea mi papelera
 papeleraPath="$HOME/papelera.zip"
 #funciones para cada opcion
 listar(){ #listo
@@ -133,7 +133,13 @@ borrar(){
 #si no existe la papelera, la creo
 if [[ -d $papeleraPath ]]
 then
-    echo "La papelera ya existe" >> script.log
+    if [[ -f $logPath ]]; then
+        echo "La papelera ya existe" >> script.log
+    else
+        echo "La papelera existente no fue creada con este script"
+        rm -r $papeleraPath
+        mkdir $papeleraPath
+    fi
 else
     mkdir $papeleraPath
     echo "La papelera se ha creado" >> script.log

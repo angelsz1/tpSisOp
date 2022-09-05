@@ -1,5 +1,0 @@
-#! /bin/bash
-process=`ps -ef | grep -E 'script.sh|inotify' | awk '{print $2}'`
-for i in $process; do
-        kill $i
-done
