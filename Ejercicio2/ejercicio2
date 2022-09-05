@@ -134,7 +134,9 @@ diaActual=""
 while read line; do
 	
     dia=`echo $line | cut -c1-10`
-	usuario=`echo $line | cut -c21-40`
+	usuario=`echo $line | cut -c21-`
+
+    echo "USUARIO: $usuario"
 
     if [ "$diaActual" != "$dia" ]; then
         diaActual=$dia
@@ -227,7 +229,7 @@ echo ""
 for i in "${!tiempoDeLlamadaPorDiaPorUsuario[@]}"
 do
     dia=`echo $i | cut -c1-10`
-    usuario=`echo $i | cut -c12-20`
+    usuario=`echo $i | cut -c12-`
     
     echo "Dia: $dia | Usuario: $usuario"
 
@@ -308,7 +310,7 @@ echo ""
 while read line; do
 
         dia=`echo $line | cut -c1-10`
-	    usuario=`echo $line | cut -c21-40`
+	    usuario=`echo $line | cut -c21-`
 
         if [ ! -z ${mapEpochs[$usuario]} ]; then
 

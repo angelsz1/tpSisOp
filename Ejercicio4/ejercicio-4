@@ -1,42 +1,88 @@
 #! /bin/bash
 
+function ejemploDeUso(){
+    echo "Ejemplo de uso:"
+    echo "1) bash $0 --ruta <ruta> --ext <extensiones>"
+    echo "2) ./$0 --ruta <ruta> --ext <extensiones>"
+    echo ""
+    echo "• ruta: ruta del directorio a analizar"
+    echo "• extensiones: lista de las extensiones de los archivos a analizar, seguidas por coma"
+}
+
 function validarParametros(){
     if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]; then
-        echo "Para ejecutar este script debes hacerlo de la siguiente forma: bash ejercicio4 --ruta<ruta del script> --extensiones <lista de las extensiones de los archivos a analizar, seguidas por coma>"
-        echo "Otra forma para ejecutar este script: ./ejercicio4 --ruta<ruta del script> --extensiones<lista de las extensiones de los archivos a analizar, seguidas por coma>"
-        echo "Este script te dara la cantidad de lineas de comentarios y de codigo y un porcetaje de las mismas, sobre el total de lineas de todos los archivos."
-    
+        echo "Este script cuenta la cantidad de lineas de codigo y de comentarios que poseen los archivos "
+        echo "en una ruta pasada por parametro controlando solo los archivos con cierta extension"
+        echo "Los archivos a analizar deben contar con fin de linea"
+        echo
+        ejemploDeUso
         exit 0
     fi
 
-    if [[ $1 != "--ruta" ]]; then
-        echo ""
-        echo "Parametro deconocido"
-        echo "Ejemplo de uso: bash ejercicio4 --ruta <folder>"
+    if [[ $2 != 4 ]]; then
+        echo "Cantidad de parametros incorrecta" 
+        echo
+        ejemploDeUso
         exit 1
     fi
 
-    if [[ $2 != 3 ]]; then
-        echo ""
-        echo "Cantidad de parametros incorrecta, deben ser: --ruta<ruta del script> --extensiones <lista de las extensiones de los archivos a analizar, seguidas por coma>"
-        echo "Ejemplo de uso: bash ejercicio4 --ruta<folder> --ext <lita de extensiones>"
-        echo ""
+    if [[ $1 != "--ruta" && $1 != "--ext" ]]; then
+        echo "Parametro deconocido: $1"
+        echo
+        ejemploDeUso
+        exit 1
+    fi
+
+    if [[ $3 != "--ruta" && $3 != "--ext" ]]; then
+        echo "Parametro deconocido: $3"
+        echo
+        ejemploDeUso
         exit 1
     fi
 }
 
-validarParametros $1 $#
+function concatenarArchivos(){
+    IFS=","
 
-if [[ $1 = "--ruta" ]]
+    totalDeArchivos=0
+    for extension in $extensiones
+    do
+        archivos=$(find "$ruta" -name "*.$extension")
+        if ! [[ $archivos == "" ]]; then {
+            cantidadDeArchivosPorExtension=$(echo $archivos | wc -l)
+            totalDeArchivos=$(($totalDeArchivos + $cantidadDeArchivosPorExtension))
+            find "$ruta" -name "*.$extension" -exec cat {} + >> $nombreArchivoConcatenado
+        } else
+            echo "No se encontraron archivos para la extension: $extension"
+        fi
+    done
+
+    echo "Cantidad de archivos analizados: $totalDeArchivos"
+}
+
+validarParametros $1 $# $3
+
+if [[ $1 == "--ruta" && $3 == "--ext" ]]
 then
     ruta="$2"
+    extensiones="$4"
+else
+    ruta="$4"
+    extensiones="$2"
 fi
 
-cat $ruta |
+nombreArchivoConcatenado="archivosConcatenados.txt"
+concatenarArchivos
+
+IFS=" "
+
+cat $nombreArchivoConcatenado |
   awk '{
     gsub(/ /,"")
+    
     if(estoyEnComentarioMultiple == 0) {
         posicionAperturaComentarioMultiple = index($0, "/*") 
+
         if(posicionAperturaComentarioMultiple == 1) {
             estoyEnComentarioMultiple = 1
         } else if (posicionAperturaComentarioMultiple > 1) {
@@ -44,8 +90,10 @@ cat $ruta |
             estoyEnComentarioMultiple = 1
         }
     }
+
     if(estoyEnComentarioMultiple == 0) {
         posicionComentarioSimple = index($0, "//") 
+
         if(posicionComentarioSimple == 1) {
             comentarios++
         } else if (posicionComentarioSimple > 1) {
@@ -55,19 +103,26 @@ cat $ruta |
             codigos++
         }
     }
+
     if(estoyEnComentarioMultiple == 1) {
         posicionCierreComentarioMultiple = index($0, "*/") 
+
         if(posicionCierreComentarioMultiple >= 1) {
             comentarios++
             estoyEnComentarioMultiple = 0
         } else {
             comentarios++
         }
+
         if(posicionCierreComentarioMultiple !=0 && posicionCierreComentarioMultiple+1 < length($0)) {
             codigos++
         }
     }
 } END {
-    print "Cantidad comentarios: " comentarios
-    print "Cantidad codigo: " codigos
+    total=comentarios+codigos
+    printf("|%-11s|%9s|%11s|\n", "", "Cantidad", "Porcentaje")
+    printf("|%-11s|%9d|%10.2f%|\n", "Comentarios", comentarios, comentarios*100/total)
+    printf("|%-11s|%9d|%10.2f%|\n", "Codigo", codigos, codigos*100/total)
 }'
+
+rm -r $nombreArchivoConcatenado

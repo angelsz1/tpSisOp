@@ -34,11 +34,15 @@ then
 fi
 
 #Check de que no exista un archivo de salida llamado igual que el que genera el programa
-if [[ `ls | grep salida.json` != "" ]]
-then
-	echo "Ya existe un archivo llamado salida.json, no es posible procesar los archivos y generar la salida"
-	exit 0
-fi
+num=0
+printf -v hoy '%(%Y-%m-%d)T'
+printf -v nombre "%s-salida" $hoy
+printf -v salida "%s-salida.json" $hoy
+
+while [ -e "$salida" ]
+do
+    printf -v salida '%s-%02d.json' "$nombre" "$(( ++num ))"
+done
 
 #Elimino los espacios de los parametros donde estan las rutas
 pathNotas=`echo $2 | tr -d " "`
@@ -118,15 +122,16 @@ function evaluarNota () {
 function mostrarResumenMaterias () {
 	printf "\t\t\t\t{\n"
 	printf "\t\t\t\t\t\"id_materia\": %d,\n", LASTMATERIA;
-	printf "\t\t\t\t\t\"descripcion: \"%s\"\n", LASTDESCRIPCION;
-	printf "\t\t\t\t\t\"final: %d,\n", finales;
-	printf "\t\t\t\t\t\"recursan: %d,\n", recursantes;
-	printf "\t\t\t\t\t\"abandonaron: %d,\n", abandonos;
-	printf "\t\t\t\t\t\"promocionan: %d\n", promocionados;
+	printf "\t\t\t\t\t\"descripcion\": \"%s\",\n", LASTDESCRIPCION;
+	printf "\t\t\t\t\t\"final\": %d,\n", finales;
+	printf "\t\t\t\t\t\"recursan\": %d,\n", recursantes;
+	printf "\t\t\t\t\t\"abandonaron\": %d,\n", abandonos;
+	printf "\t\t\t\t\t\"promocionan\": %d\n", promocionados;
 	printf "\t\t\t\t}"
 }
 
 function mostrarIDNotasTitulo () {
+	printf "\t\t{\n";
 	printf "\t\t\t\"id\": %d,\n", $7;
 	printf "\t\t\t\"notas\": [\n";
 }
@@ -143,7 +148,6 @@ function resetContadores () {
 	{
 		printf "{\n";
 		printf "\t\"departamentos\": [\n"
-		printf "\t\t{\n"
 		mostrarIDNotasTitulo();
 		
 		LASTDEPTO=$7;
@@ -174,7 +178,6 @@ function resetContadores () {
 			printf ",\n";
 			
 			resetContadores();
-			
 			evaluarNota();
 		}
 	}
@@ -182,12 +185,12 @@ function resetContadores () {
 	{
 		mostrarResumenMaterias();
 		printf "\n";
+		printf "\t\t\t]\n";
+		printf "\t\t},\n";
 		
 		resetContadores();
-		
 		evaluarNota();
-		
-		printf "\t\t\t]\n";
+
 		mostrarIDNotasTitulo();
 	}
 	LASTDEPTO=DEPTO;
@@ -198,12 +201,14 @@ function resetContadores () {
 END {
 	mostrarResumenMaterias();
 	printf "\n";
-	
 	printf "\t\t\t]\n"
 	printf "\t\t}\n"
+	
 	printf "\t]\n"
 	printf "}";
 }
-' > salida.json
+' > $salida
 
-echo "Archivo de salida guardado en `pwd`/salida.json"
+echo "Archivo de salida guardado en `pwd`/$salida"
+
+#FINAL EJERCICIO 5
