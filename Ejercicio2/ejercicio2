@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#APL N. 1
+#SCRIPT 2
+#INTEGRANTES:
+      #Carballo, Facundo Nicolas (DNI: 42774931)
+      #Garcia Burgio, Matias Nicolas (DNI: 42649117)
+      #Mottura, Agostina Micaela (DNI: 41898101)
+      #Povoli Olivera, Victor (DNI: 43103780)
+      #Szust, Ángel Elías (DNI: 43098495)
+
 # Punto 1 (Promedio de tiempo de las llamadas realizadas por dia)
 # Punto 2 (Promedio por usuario y cantidad de tiempo por dia del usuario)
 # Punto 3 (Los 3 usuarios con mas llamadas en la semana)
