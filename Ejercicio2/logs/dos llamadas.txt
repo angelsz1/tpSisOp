@@ -1,13 +1,3 @@
-
-#APL N. 1
-#SCRIPT 2
-#INTEGRANTES:
-      #Carballo, Facundo Nicolas (DNI: 42774931)
-      #Garcia Burgio, Matias Nicolas (DNI: 42649117)
-      #Mottura, Agostina Micaela (DNI: 41898101)
-      #Povoli Olivera, Victor (DNI: 43103780)
-      #Szust, Ángel Elías (DNI: 43098495)
-
 2022-08-25 15:50:55-facu
 2022-08-25 15:55:55-facu
 2022-08-25 16:50:55-diego
