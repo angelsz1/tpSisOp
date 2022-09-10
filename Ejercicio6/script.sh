@@ -12,23 +12,8 @@
 
 
 #crear mi propia papelera de reciclaje
-if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]; then
-    ayuda
-    exit 0
-fi
-> script.log
-logPath="$HOME/papelera.zip/logPapeleraAMAVF.txt" #iniciales del grupo, para chequear que sea mi papelera
-papeleraPath="$HOME/papelera.zip"
-#funciones para cada opcion
-listar(){ #listo
-    cat $logPath | cut -d " " -f -2 
-}
 
-vaciar(){ #listo
-    rm -r $papeleraPath
-    mkdir $papeleraPath
-    > $logPath
-}
+
 ayuda(){
     echo "Sintaxis : $0 ACCION [archivo/dir]"
     echo "Acciones : "
@@ -37,6 +22,44 @@ ayuda(){
     echo "--borrar [archivo/dir]: Elimina de la papelera (definitivamente) al archivo o directorio pasado por parametro. El mismo debe estar en la papelera"
     echo "--vaciar: Vacia la papelera"
     echo "Ejemplo: $0 --eliminar ../archivo"
+}
+
+if [[ $1 = "-h" || $1 = "--help" || $1 = "-?" ]]; then
+    ayuda
+    exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+    echo "Error: No se ingreso ningun parametro"
+    echo "Ingrese -h para ver la ayuda"
+    exit 1
+fi
+> script.log
+logPath="$HOME/papelera.zip/logPapeleraAMAVF.txt" #iniciales del grupo, para chequear que sea mi papelera
+papeleraPath="$HOME/papelera.zip"
+#funciones para cada opcion
+
+
+listar(){ #listo
+    var=`cat $logPath | cut -d " " -f -2 `
+    if [[ $var = "" ]]; then
+        echo "La papelera esta vacia"
+    else
+        echo "Contenido de la papelera: "
+        cat $logPath | cut -d " " -f -2
+    fi
+
+}
+
+vaciar(){ #listo
+    if [[ `cat $logPath | cut -d " " -f -2` = "" ]]; then
+        echo "La papelera ya esta vacia"
+        return;
+    fi
+    rm -r $papeleraPath
+    mkdir $papeleraPath
+    > $logPath
+    echo "Papelera vaciada"
 }
 
 recuperar(){ #listo
@@ -181,25 +204,28 @@ elif [[ $1 = "--vaciar" ]]; then #sin params
 elif [[ $1 = "--recuperar" ]]; then #param: archivo
     if [[ $2 != "" ]]; then
         recuperar $2
+        echo "El archivo $2 se ha recuperado" 
     else
         echo "Debe proporcionar un archivo/directorio a recuperar"
-        ayuda
+        echo "Para mas informacion, ejecute el script con la opcion -h"
         exit 1;
     fi
 elif [[ $1 = "--eliminar" ]]; then #param: archivo
     if [[ -f $2 || -d $2 ]]; then
         eliminar $2
+        echo "El archivo $2 se ha eliminado" 
     else
         echo "$2 no es un parametro valido"
-        ayuda
+        echo "Para mas informacion, ejecute el script con la opcion -h"
         exit 1;
     fi
 elif [[ $1 = "--borrar" ]]; then #param: archivo
     if [[ $2 != "" ]]; then
         borrar $2
+        echo "El archivo $2 se ha borrado de la papelera de reciclaje"
     else
         echo "Debe proporcionar un archivo/directorio a borrar"
-        ayuda
+        echo "Para mas informacion, ejecute el script con la opcion -h"
         exit 1;
     fi
 fi
