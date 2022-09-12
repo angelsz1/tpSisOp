@@ -31,22 +31,28 @@ function validarParametros(){
 
     if [[ $2 != 4 ]]; then
         echo "Cantidad de parametros incorrecta" 
-        echo
-        ejemploDeUso
+        echo "Invoque ayuda (incluye ejemplo de uso) con:"
+        echo "    bash <ruta del script> -h"
+        echo "    bash <ruta del script> --help"
+        echo "    bash <ruta del script> -?"
         exit 1
     fi
 
     if [[ $1 != "--ruta" && $1 != "--ext" ]]; then
         echo "Parametro deconocido: $1"
-        echo
-        ejemploDeUso
+        echo "Invoque ayuda (incluye ejemplo de uso) con:"
+        echo "    bash <ruta del script> -h"
+        echo "    bash <ruta del script> --help"
+        echo "    bash <ruta del script> -?"
         exit 1
     fi
 
     if [[ $3 != "--ruta" && $3 != "--ext" ]]; then
         echo "Parametro deconocido: $3"
-        echo
-        ejemploDeUso
+        echo "Invoque ayuda (incluye ejemplo de uso) con:"
+        echo "    bash <ruta del script> -h"
+        echo "    bash <ruta del script> --help"
+        echo "    bash <ruta del script> -?"
         exit 1
     fi
 }
