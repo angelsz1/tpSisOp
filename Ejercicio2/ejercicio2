@@ -1,14 +1,5 @@
 #!/bin/bash
 
-#APL N. 1
-#SCRIPT 2
-#INTEGRANTES:
-      #Carballo, Facundo Nicolas (DNI: 42774931)
-      #Garcia Burgio, Matias Nicolas (DNI: 42649117)
-      #Mottura, Agostina Micaela (DNI: 41898101)
-      #Povoli Olivera, Victor (DNI: 43103780)
-      #Szust, Ángel Elías (DNI: 43098495)
-
 # Punto 1 (Promedio de tiempo de las llamadas realizadas por dia)
 # Punto 2 (Promedio por usuario y cantidad de tiempo por dia del usuario)
 # Punto 3 (Los 3 usuarios con mas llamadas en la semana)
@@ -43,17 +34,15 @@ if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] || [[ $1 == "-?" ]]; then
 
     echo ""
 
-    echo "path: La ruta al archivo de registros de llamadas que quieras analizar"
+    echo "path: La ruta al directorio donde se encuentran los archivos de logs."
 
     echo ""
 
-    echo "Si tu archivo contienes espacios deberas escribir el nombre de tu archivo usando comillas:"
+    echo "Si tu directorio contiene espacios deberas escribir el nombre usando comillas:"
 
-    echo "bash $0 --logs 'tu archivo'"
+    echo "bash $0 --logs 'directorio'"
 
     echo ""
-
-    # echo "--logs: Ruta al archivo que contiene los registros de las llamadas telefonicas."
 
     echo "Formato de este archivo:"
 
@@ -70,7 +59,7 @@ if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] || [[ $1 == "-?" ]]; then
 
     echo ""
 
-    echo "bash $0 --logs ./logs/llamadas.txt"
+    echo "bash $0 --logs ./logs"
 
     echo ""
 
@@ -83,7 +72,7 @@ fi
 if [[ $# != 2 ]]; then
     echo "Cantidad de parametros incorrecta, deben ser 2"
     echo ""
-    echo "bash ejercicio2 --logs <file>"
+    echo "bash ejercicio2 --logs <path>"
     echo ""
     exit 1
 fi
@@ -92,15 +81,15 @@ fi
 if [[ $1 != "--logs" ]]; then
     echo "Parametros invalidos"
     echo ""
-    echo "bash ejercicio2 --logs <file>"
+    echo "bash ejercicio2 --logs <path>"
     echo ""
     exit 1
 fi
 
 # Verificamos que el archivo a procesar sea un fichero regular
-if [[ ! -f  $2 ]]
+if [[ ! -d  $2 ]]
 then
-	echo "El archivo no es un fichero regular";
+	echo "Debes pasar el directorio que contenga los archivos de logs";
 	exit 1;
 fi
 
@@ -111,7 +100,7 @@ then
 	exit 1;
 fi
 
-ordenarArchivoEnVariable "$2"
+
 
 declare -A mapEpochs
 
@@ -139,78 +128,83 @@ declare -A tiempoDeLLamadaPorUsuarioSemanal
 cantidadDias=0
 diaActual=""
 
+for file in $2/*
+do
+    ordenarArchivoEnVariable "$file"
 
-while read line; do
-	
-    dia=`echo $line | cut -c1-10`
-	usuario=`echo $line | cut -c21-`
+    while read line; do
 
-    echo "USUARIO: $usuario"
+        dia=`echo $line | cut -c1-10`
+        usuario=`echo $line | cut -c21-`
 
-    if [ "$diaActual" != "$dia" ]; then
-        diaActual=$dia
-        ((cantidadDias+=1))
-    fi
+        if [ "$diaActual" != "$dia" ]; then
+            diaActual=$dia
+            ((cantidadDias+=1))
+        fi
 
-    if [ ! -z ${mapEpochs[$usuario]} ]; then
+        if [ ! -z ${mapEpochs[$usuario]} ]; then
 
-        # Finaliza una llamada de este usuario ($usuario) 
-        
-        # Obtenemos la fecha desde el archivo de texto
-        fechaFin=`echo $line | cut -c1-20`
+            # Finaliza una llamada de este usuario ($usuario) 
+            
+            # Obtenemos la fecha desde el archivo de texto
+            fechaFin=`echo $line | cut -c1-20`
 
-        # Convertir la fecha a epoch
-        epochFin=`date -d "$fechaFin" +%s`
+            # Convertir la fecha a epoch
+            epochFin=`date -d "$fechaFin" +%s`
 
-        # Obtener la diferencia entre epochs
-        difEpochs=$(($epochFin-${mapEpochs[$usuario]}))
+            # Obtener la diferencia entre epochs
+            difEpochs=$(($epochFin-${mapEpochs[$usuario]}))
 
-        # Obtenemos el dia de inicio de la llamada
-        diaInicio=`date -d @${mapEpochs[$usuario]} -I`
+            # Obtenemos el dia de inicio de la llamada
+            diaInicio=`date -d @${mapEpochs[$usuario]} -I`
 
-        # Sumamos el tiempo de llamada por usuario en el dia que se inicio la llamada
-        ((tiempoDeLlamadaPorDiaPorUsuario["$diaInicio $usuario"]+=$difEpochs))
+            # Sumamos el tiempo de llamada por usuario en el dia que se inicio la llamada
+            ((tiempoDeLlamadaPorDiaPorUsuario["$diaInicio $usuario"]+=$difEpochs))
 
-        # Aumentamos el tiempo de llamada por usuario en la semana
-        ((tiempoDeLLamadaPorUsuarioSemanal[$usuario]+=$difEpochs))
+            # Aumentamos el tiempo de llamada por usuario en la semana
+            ((tiempoDeLLamadaPorUsuarioSemanal[$usuario]+=$difEpochs))
 
-        # Aumentamos los tiempos de llamada por dia
-        ((tiempoDeLlamadaPorDia[$diaInicio]+=$difEpochs))
+            # Aumentamos los tiempos de llamada por dia
+            ((tiempoDeLlamadaPorDia[$diaInicio]+=$difEpochs))
 
-        # Aumentamos los tiempos de llamada semanal
-        ((tiempoDeLlamadaSemanal+=$difEpochs))
+            # Aumentamos los tiempos de llamada semanal
+            ((tiempoDeLlamadaSemanal+=$difEpochs))
 
-        # Volvemos a colocar el map del usuario en vacio
-        mapEpochs["$usuario"]=""
+            # Volvemos a colocar el map del usuario en vacio
+            mapEpochs["$usuario"]=""
 
-    else
+        else
 
-        # Comienza una llamada nueva de este usuario ($usuario) 
-        ((cantidadLlamadasPorUsuario[$usuario]+=1))
+            # Comienza una llamada nueva de este usuario ($usuario) 
+            ((cantidadLlamadasPorUsuario[$usuario]+=1))
 
-        # Aumentamos la cantidad de llamadas en ese dia
-        ((cantidadLlamadasPorDia[$dia]+=1))
+            # Aumentamos la cantidad de llamadas en ese dia
+            ((cantidadLlamadasPorDia[$dia]+=1))
 
-        # Aumentamos la cantidad de llamadas semanales
-        ((cantidadLlamadasSemanal+=1))
+            # Aumentamos la cantidad de llamadas semanales
+            ((cantidadLlamadasSemanal+=1))
 
-        # Sumamos la cantidad de llamadas realizadas por el usuario en el dia
-        ((cantidadLlamadasPorDiaPorUsuario["$dia $usuario"]+=1))
+            # Sumamos la cantidad de llamadas realizadas por el usuario en el dia
+            ((cantidadLlamadasPorDiaPorUsuario["$dia $usuario"]+=1))
 
-        # Obtenemos la fecha desde el archivo de texto
-        fechaInicio=`echo $line | cut -c1-20`
+            # Obtenemos la fecha desde el archivo de texto
+            fechaInicio=`echo $line | cut -c1-20`
 
-        # Convertimos la fecha a epoch
-        epochInicio=`date -d "$fechaInicio" +%s`
+            # Convertimos la fecha a epoch
+            epochInicio=`date -d "$fechaInicio" +%s`
 
-        # Actualizamos el map de este usuario
-        mapEpochs[$usuario]=$epochInicio
-    fi
+            # Actualizamos el map de este usuario
+            mapEpochs[$usuario]=$epochInicio
+        fi
 
+    done <<< "$archivoOrdenado"
+    
 
-done <<< "$archivoOrdenado"
+done
 
-# Mostramos Punto 1
+# ordenarArchivoEnVariable "$2"
+
+# # Mostramos Punto 1
 echo "Punto 1. Promedio de tiempo de las llamadas realizadas por dia."
 echo ""
 
@@ -231,7 +225,7 @@ done
 echo ""
 
 
-# Mostramos Punto 2
+# # # Mostramos Punto 2
 echo "Punto 2. Promedio de tiempo y cantidad por usuario por dia."
 echo ""
 
@@ -254,7 +248,7 @@ done
 
 echo ""
 
-# Mostramos Punto 3
+# # Mostramos Punto 3
 echo "Punto 3. Los 3 usuarios con mas llamadas en la semana."
 echo ""
 
@@ -316,8 +310,13 @@ fi
 echo ""
 
 
-while read line; do
+for file in $2/*
+do
+    ordenarArchivoEnVariable "$file"
+    
+    while read line; do
 
+        
         dia=`echo $line | cut -c1-10`
 	    usuario=`echo $line | cut -c21-`
 
@@ -345,23 +344,26 @@ while read line; do
         # Volvemos a colocar el map del usuario en vacio
         mapEpochs["$usuario"]=""
 
-    else
+        else
 
-        # Comienza una llamada nueva de este usuario ($usuario) 
+            # Comienza una llamada nueva de este usuario ($usuario) 
 
-        # Obtenemos la fecha desde el archivo de texto
-        fechaInicio=`echo $line | cut -c1-20`
+            # Obtenemos la fecha desde el archivo de texto
+            fechaInicio=`echo $line | cut -c1-20`
 
-        # Convertimos la fecha a epoch
-        epochInicio=`date -d "$fechaInicio" +%s`
+            # Convertimos la fecha a epoch
+            epochInicio=`date -d "$fechaInicio" +%s`
 
-        # Actualizamos el map de este usuario
-        mapEpochs[$usuario]=$epochInicio
-    fi
+            # Actualizamos el map de este usuario
+            mapEpochs[$usuario]=$epochInicio
+        fi
 
-done <<< "$archivoOrdenado"
+    done <<< "$archivoOrdenado"
 
-# Mostramos Punto 4
+done
+
+
+# # # Mostramos Punto 4
 echo "Punto 4. Cuantas llamadas no superan la media de tiempo por dia"
 echo ""
 
@@ -372,7 +374,7 @@ done
 
 echo ""
 
-# Mostramos Punto 5
+# # Mostramos Punto 5
 echo "Punto 5. El usuario que tiene mas cantidad de llamadas por debajo de la media en la semana"
 echo ""
 

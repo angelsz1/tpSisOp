@@ -1,13 +1,3 @@
-
-#APL N. 1
-#SCRIPT 1
-#INTEGRANTES:
-      #Carballo, Facundo Nicolas (DNI: 42774931)
-      #Garcia Burgio, Matias Nicolas (DNI: 42649117)
-      #Mottura, Agostina Micaela (DNI: 41898101)
-      #Povoli Olivera, Victor (DNI: 43103780)
-      #Szust, Ángel Elías (DNI: 43098495)
-
 1. El objetivo del script es calcular la cantidad de lineas, caracteres de un archivo o su maxima cantidad de caracteres en una linea.
 2. Recibe el path del archivo a analizar en $1 y la accion a realizar (L, C o M) en $2.
 3. Si la cantidad de parámetros del script es menor a 2 llama a la función ErrorS
