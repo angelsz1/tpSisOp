@@ -26,7 +26,7 @@ elif test -f $1 && (test $2 = "L" || test $2 = "C" || test $2 = "M"); then #si c
  res=`wc -L $1` #guardamos en la variable res la cantidad maxima de caracteres en una linea del script y mostramos por pantalla el resultado
  echo "La cantidad maxima de caracteres en una linea es: $res"
  fi
-else  #si el parametro no es valido, llamamos a la funcion ErrorS con todos los detalles para el uso del script
+else  #si el parametro de opcion no es valido, llamamos a la funcion ErrorS con todos los detalles para el uso del script
  ErrorS
 fi
 
