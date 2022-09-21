@@ -41,12 +41,12 @@ papeleraPath="$HOME/papelera.zip"
 
 
 listar(){ #listo
-    var=`cat $logPath | cut -d " " -f -2 `
+    var=`cat $logPath | awk 'BEGIN{FS="  ";OFS=" "} {print $1,$2}'`
     if [[ $var = "" ]]; then
         echo "La papelera esta vacia"
     else
         echo "Contenido de la papelera: "
-        cat $logPath | cut -d " " -f -2
+        cat $logPath | awk 'BEGIN{FS="  ";OFS=" "} {print $1,$2}'
     fi
 
 }
@@ -64,39 +64,39 @@ vaciar(){ #listo
 
 recuperar(){ #listo
 
-    if [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -gt 1 ]]; then
-        grep $1 < $logPath | awk '{printf "%d - %s %s\n", NR, $1, $2}'
+    if [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -gt 1 ]]; then
+        grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%d - %s %s\n", NR, $1, $2}'
         echo "Cual queres recuperar?"
         read archNum
-        nuevoNombre=`grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) printf "%s|%d" , $1, $3}'` 
-        IDarch=`grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $3}'`
-        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 
+        nuevoNombre="`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) printf "%s|%d" , $1, $3}'`"
+        IDarch=`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $3}'`
+        mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
 
         #si es un file
-        if [[ -f $papeleraPath/$1 ]]; then
-            cp $papeleraPath/$1 `grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $2}'`
-            rm $papeleraPath/$1 
+        if [[ -f $papeleraPath/"$1" ]]; then
+            cp $papeleraPath/"$1" "`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`"
+            rm $papeleraPath/"$1" 
         #si es un dir
-        elif [[ -d $papeleraPath/$1 ]]; then 
-            cp -r $papeleraPath/$1 `grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $2}'` 
-            rm -r $papeleraPath/$1 
+        elif [[ -d $papeleraPath/"$1" ]]; then 
+            cp -r $papeleraPath/"$1" "`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`" 
+            rm -r $papeleraPath/"$1" 
         fi
 
         sed -i "/$IDarch/d" $logPath
 
 
-    elif [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -eq 1 ]]; then
-        nuevoNombre=`grep $1 < $logPath | awk '{printf "%s|%d" , $1, $3}'` #consigo el nuevo nombre del archivo dentro de la papelera
-        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 #le cambio el nombre al original
+    elif [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -eq 1 ]]; then
+        nuevoNombre="`grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'`" #consigo el nuevo nombre del archivo dentro de la papelera
+        mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" #le cambio el nombre al original
 
         #si es un file
-        if [[ -f $papeleraPath/$1 ]]; then
-            cp $papeleraPath/$1 `grep $1 < $logPath | awk '{print $2}'` 
-            rm $papeleraPath/$1 
+        if [[ -f $papeleraPath/"$1" ]]; then
+            cp $papeleraPath/"$1" "`grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $2}'`" 
+            rm $papeleraPath/"$1" 
         #si es un dir
-        elif [[ -d $papeleraPath/$1 ]]; then 
-            cp -r $papeleraPath/$1 `grep $1 < $logPath | awk '{print $2}'` 
-            rm -r $papeleraPath/$1 
+        elif [[ -d $papeleraPath/"$1" ]]; then 
+            cp -r $papeleraPath/"$1" "`grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $2}'`" 
+            rm -r $papeleraPath/"$1"
         fi
 
         sed -i "/$1/d" $logPath    #borro la linea del log
@@ -107,53 +107,53 @@ recuperar(){ #listo
 }
 
 eliminar(){ #listo
-    if [[ -d $1 ]]; then
-        cp -r $1 $papeleraPath
+    if [[ -d "$1" ]]; then
+        cp -r "$1" $papeleraPath
     else
-        cp $1 $papeleraPath
+        cp "$1" $papeleraPath
     fi
-    pathArchivo=$(realpath $1);
-    nombreArchivo=$(basename $1);
+    pathArchivo="$(realpath "$1")"
+    nombreArchivo="$(basename "$1")"
     dateRand=$(date +%s)$RANDOM
-    mv $papeleraPath/$nombreArchivo "$papeleraPath/$nombreArchivo|$dateRand" #le cambio el nombre al archivo para que no se repita
-    echo "$nombreArchivo $(dirname $pathArchivo) $dateRand" >> $logPath
-    if [[ -d $1 ]]; then
-        rm -r $1
+    mv $papeleraPath/"$nombreArchivo" "$papeleraPath/$nombreArchivo|$dateRand" #le cambio el nombre al archivo para que no se repita
+    echo ""$nombreArchivo"  "$(dirname "$pathArchivo")"  $dateRand" >> $logPath
+    if [[ -d "$1" ]]; then
+        rm -r "$1"
     else
-        rm $1
+        rm "$1"
     fi
 }
 
 borrar(){
-    if [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -gt 1 ]]; then
-        grep $1 < $logPath | awk '{printf "%d - %s %s\n", NR, $1, $2}'
+    if [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -gt 1 ]]; then
+        grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%d - %s %s\n", NR, $1, $2}'
         echo "Cual queres borrar?"
         read archNum
-        nuevoNombre=`cat $logPath | grep $1 | awk -v var=$archNum '{if(NR == var) printf "%s|%d" , $1, $3}'` 
-        IDarch=`grep $1 < $logPath | awk -v var=$archNum '{if(NR == var) print $3}'`
-        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 
+        nuevoNombre=`cat $logPath | grep $1 | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) printf "%s|%d" , $1, $3}'` 
+        IDarch=`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $3}'`
+        mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
 
         #si es un file
-        if [[ -f $papeleraPath/$1 ]]; then
-            rm $papeleraPath/$1 
+        if [[ -f $papeleraPath/"$1" ]]; then
+            rm $papeleraPath/"$1" 
         #si es un dir
-        elif [[ -d $papeleraPath/$1 ]]; then 
-            rm -r $papeleraPath/$1 
+        elif [[ -d $papeleraPath/"$1" ]]; then 
+            rm -r $papeleraPath/"$1" 
         fi
 
         sed -i "/$IDarch/d" $logPath
 
 
-    elif [[ `cat $logPath | grep $1 | awk 'END{print NR}'` -eq 1 ]]; then
-        nuevoNombre=`cat $logPath | grep $1 | awk '{printf "%s|%d" , $1, $3}'` 
-        mv $papeleraPath/$nuevoNombre $papeleraPath/$1 
+    elif [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -eq 1 ]]; then
+        nuevoNombre=`cat $logPath | grep "$1" | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'` 
+        mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
 
         #si es un file
-        if [[ -f $papeleraPath/$1 ]]; then
-            rm $papeleraPath/$1 
+        if [[ -f $papeleraPath/"$1" ]]; then
+            rm $papeleraPath/"$1" 
         #si es un dir
-        elif [[ -d $papeleraPath/$1 ]]; then 
-            rm -r $papeleraPath/$1 
+        elif [[ -d $papeleraPath/"$1" ]]; then 
+            rm -r $papeleraPath/"$1" 
         fi
 
         sed -i "/$1/d" $logPath    #borro la linea del log
@@ -196,33 +196,42 @@ if ! [[ $1 = "--listar" || $1 = "--vaciar" || $1 = "--recuperar" || $1 = "--elim
     exit 1
 fi
 
+if [[ $2 != "" ]]; then
+    ruta="$2"
+fi
+
+
 #si la opcion es listar, vaciar, recuperar, eliminar o borrar, ejecuto la funcion correspondiente
 if [[ $1 = "--listar" ]]; then #sin params
     listar
 elif [[ $1 = "--vaciar" ]]; then #sin params
     vaciar
 elif [[ $1 = "--recuperar" ]]; then #param: archivo
-    if [[ $2 != "" ]]; then
-        recuperar $2
-        echo "El archivo $2 se ha recuperado" 
+    if [[ $ruta != "" ]]; then
+        recuperar "$ruta"
+        echo "El archivo $ruta se ha recuperado" 
     else
         echo "Debe proporcionar un archivo/directorio a recuperar"
         echo "Para mas informacion, ejecute el script con la opcion -h"
         exit 1;
     fi
 elif [[ $1 = "--eliminar" ]]; then #param: archivo
-    if [[ -f $2 || -d $2 ]]; then
-        eliminar $2
-        echo "El archivo $2 se ha eliminado" 
+    if [[ -f $ruta || -d $ruta ]]; then
+        eliminar "$ruta"
+        echo "El archivo $ruta se ha eliminado" 
+    elif [[ $ruta = "" ]]; then
+        echo "Debe proporcionar un archivo/directorio a eliminar"
+        echo "Para mas informacion, ejecute el script con la opcion -h"
+        exit 1;
     else
-        echo "$2 no es un parametro valido"
+        echo "$ruta no es un parametro valido"
         echo "Para mas informacion, ejecute el script con la opcion -h"
         exit 1;
     fi
 elif [[ $1 = "--borrar" ]]; then #param: archivo
-    if [[ $2 != "" ]]; then
-        borrar $2
-        echo "El archivo $2 se ha borrado de la papelera de reciclaje"
+    if [[ $ruta != "" ]]; then
+        borrar $ruta
+        echo "El archivo $ruta se ha borrado de la papelera de reciclaje"
     else
         echo "Debe proporcionar un archivo/directorio a borrar"
         echo "Para mas informacion, ejecute el script con la opcion -h"

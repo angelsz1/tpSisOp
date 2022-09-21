@@ -43,9 +43,10 @@ archivo_renombrado(){
 #compilar los archivos de un directorio
 compilar(){
     pathActual=`pwd`
-    cd $1
-    ls | grep -r '' | cut -d ":" -f 2- > $pathActual"/"$2
-    cd $pathActual
+    cd "$1"
+    echo `pwd`
+    ls | grep -r '' | cut -d ":" -f 2- > "$pathActual"/"$2"
+    cd "$pathActual"
 }
 if [[ $7 = "" ]];then
 
@@ -53,7 +54,7 @@ if [[ $7 = "" ]];then
         echo "Error: debe utilizar -c para especificar el directorio a monitorizar"
         echo "Para mas informacion, ejecute $0 -h"
         exit 1
-    elif [[ $2 = "" || ! -d $2 ]]; then
+    elif [[ "$2" = "" || ! -d "$2" ]]; then
         echo "Error: no se especifico un directorio valido"
         echo "Para mas informacion, ejecute $0 -h"
         exit 1
@@ -89,13 +90,13 @@ if [[ $7 = "" ]];then
                 echo "La accion publicar requiere un directorio de publicacion"
                 exit 1
             else
-                if [[ ! -r $6 ]]; then
+                if [[ ! -d "$6" ]]; then
+                    mkdir "$6"
+                fi
+                if [[ ! -r "$6" ]]; then
                     echo "No tienes permisos de lectura sobre la ruta $6"
                     exit 1
                 fi
-            fi
-            if [[ ! -d $6 ]]; then
-                mkdir $6
             fi
             if [[ ! $acciones =~ "compilar" ]]; then
                 echo "La accion publicar requiere la accion compilar"
@@ -110,14 +111,13 @@ if [[ $7 = "" ]];then
     fi
 fi
 
-
 #creo el demonio
 > nohup.out
 if [[ $7 = "" ]]; then
-    nohup ./script.sh $1 $2 $3 $4 $5 $6 "1" &
-    exit 0
+    nohup ./script.sh $1 "$2" $3 $4 $5 "$6" "1" &
+    exit 0; 
 fi
-echo $0
+
 
 #manejo del -a
 acciones=`echo $4 | tr "," " "`
@@ -132,20 +132,17 @@ if [[ $acciones =~ "compilar" ]]; then
         touch bin/concat.con
     fi
 
-    compilar $2 bin/concat.con
+    compilar "$2" "bin/concat.con"
     if [[ $acciones =~ "publicar" ]]; then
-        cp bin/concat.con $6
+        rutaDestino="$6"
+        cp "bin/concat.con" "$rutaDestino"
     fi
 
 fi
 
-
-echo "Monitorizando $2"
-
-
-
+echo "Monitorizando "$2"..."
 #chequeo permisos de lectura sobre la ruta
-if [[ ! -r $2 ]]; then 
+if [[ ! -r "$2" ]]; then 
     echo "No tienes permisos de lectura sobre la ruta $2"
     exit 1
 fi
@@ -154,7 +151,7 @@ fi
 #vacio el log
 > monitor_log
 
-inotifywait -q -m -r -e create,modify,delete,moved_to $2 | while read DIRECTORIO EVENTO ARCHIVO; do
+inotifywait -q -m -r -e create,modify,delete,moved_to "$2" | while read DIRECTORIO EVENTO ARCHIVO; do
     case $EVENTO in
         MODIFY*)
             if [[ $acciones =~ "listar" ]]; then
@@ -162,13 +159,13 @@ inotifywait -q -m -r -e create,modify,delete,moved_to $2 | while read DIRECTORIO
             fi
             if [[ $acciones =~ "peso" ]]; then
             fulDir="$DIRECTORIO$ARCHIVO"
-                echo "Peso = `du --apparent-size -h $fulDir`" | awk '{print $1,$2,$3}' | uniq >> monitor_log
+                echo "Peso = `du --apparent-size -h "$fulDir"`" | awk '{print $1,$2,$3}' | uniq >> monitor_log
             fi
             if [[ $acciones =~ "compilar" ]]; then #concatenar los archivos en $2 y guardar en bin/concat.con
-                compilar $2 "bin/concat.con"
+                compilar "$2" "bin/concat.con"
             fi
             if [[ $acciones =~ "publicar" ]]; then #publicar el archivo bin/concat.con en $6
-                cp bin/concat.con $6
+                cp "bin/concat.con" "$rutaDestino"
             fi
                 
             ;;
@@ -181,10 +178,10 @@ inotifywait -q -m -r -e create,modify,delete,moved_to $2 | while read DIRECTORIO
                 echo "Peso = `du --apparent-size -h $fulDir`" | awk '{print $1,$2,$3}' | uniq>> monitor_log
             fi
             if [[ $acciones =~ "compilar" ]]; then #concatenar los archivos en $2 y guardar en bin/concat.con
-                compilar $2 "bin/concat.con"
+                compilar "$2" "bin/concat.con"
             fi
             if [[ $acciones =~ "publicar" ]]; then #publicar el archivo bin/concat.con en $6
-                cp bin/concat.con $6
+                cp "bin/concat.con" "$rutaDestino"
             fi
             ;;
         DELETE*)
@@ -193,10 +190,10 @@ inotifywait -q -m -r -e create,modify,delete,moved_to $2 | while read DIRECTORIO
             fi
             #no muestro peso porque no se puede calcular
             if [[ $acciones =~ "compilar" ]]; then #concatenar los archivos en $2 y guardar en bin/concat.con
-                compilar $2 "bin/concat.con"
+                compilar "$2" "bin/concat.con"
             fi
             if [[ $acciones =~ "publicar" ]]; then #publicar el archivo bin/concat.con en $6
-                cp bin/concat.con $6
+                cp "bin/concat.con" "$rutaDestino"
             fi
             ;;
         #RENAMED
@@ -209,10 +206,10 @@ inotifywait -q -m -r -e create,modify,delete,moved_to $2 | while read DIRECTORIO
                 echo "Peso = `du --apparent-size -h $fulDir`" | awk '{print $1,$2,$3}' | uniq >> monitor_log
             fi
             if [[ $acciones =~ "compilar" ]]; then #concatenar los archivos en $2 y guardar en bin/concat.con
-                compilar $2 "bin/concat.con"
+                compilar "$2" "bin/concat.con"
             fi
             if [[ $acciones =~ "publicar" ]]; then #publicar el archivo bin/concat.con en $6
-                cp bin/concat.con $6
+                cp "bin/concat.con" "$rutaDestino"
             fi
             ;;
     esac
