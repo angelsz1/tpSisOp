@@ -54,31 +54,27 @@ do
     printf -v salida '%s-%02d.json' "$nombre" "$(( ++num ))"
 done
 
-#Elimino los espacios de los parametros donde estan las rutas
-pathNotas=`echo $2 | tr -d " "`
-pathMaterias=`echo $4 | tr -d " "`
-
 #Check de que los archivos a procesar son ficheros
-if [[ ! -f  $pathNotas ]]
+if [[ ! -f  "$2" ]]
 then
 	echo "El archivo de notas no es un fichero regular"
 	exit 1
 fi
 
-if [[ ! -f  $pathMaterias ]]
+if [[ ! -f  "$4" ]]
 then
 	echo "El archivo de materias no es un fichero regular"
 	exit 1
 fi
 
 #Check de permisos de lectura en los archivos a procesar
-if [[ ! -r  $pathNotas ]]
+if [[ ! -r  "$2" ]]
 then
 	echo "No hay permiso de lectura para procesar el archivo de notas"
 	exit 1
 fi
 
-if [[ ! -r  $pathMaterias ]]
+if [[ ! -r  "$4" ]]
 then
 	echo "No hay permiso de lectura para procesar el archivo de materias"
 	exit 1
@@ -104,7 +100,7 @@ awk -F "|" 'FNR==NR {
 		}
 		
 	}
-	' $pathMaterias $pathNotas | sort -t'|' -k7,7 -k2,2 | awk -F "|" '
+	' "$4" "$2" | sort -t'|' -k7,7 -k2,2 | awk -F "|" '
 function evaluarNota () {
 	if(FIN == "")
 		{
