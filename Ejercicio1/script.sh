@@ -1,32 +1,32 @@
 #!/bin/bash
-ErrorS()
+ErrorS()  #desarrollo de la funcion ErrorS para indicar error de ingreso de parametros, con echo mostramos los mensajes por pantalla
 {
  echo "Error. La sintaxis del script es la siguiente:"
  echo "Cantidad de lineas: script.sh nombre_archivo L"
  echo "Cantidad de caracteres: script.sh nombre_archivo C"
  echo "Cantidad maxima de caracteres en una linea: script.sh nombre_archivo M"
 }
-ErrorP()
+ErrorP() #desarrollo de la funcion ErrorP para indicar que el script no existe o no posee permisos de lectura
 {
  echo "Error. $1 no es posible analizarlo ya que no se cuenta con permisos de lectura o no existe"
 }
-if test $# -lt 2; then
+if test $# -lt 2; then #chequeamos que la cantidad de parametros sea la correcta, sino no es asi llamo a la funcion de Error
  ErrorS
 fi
-if ! test -r $1; then
+if ! test -r $1; then #chequeamos existencia y permiso de lectura del archivo enviado por parametreo, si no cumple llamamos a la funcion de error
  ErrorP
-elif test -f $1 && (test $2 = "L" || test $2 = "C" || test $2 = "M"); then
- if test $2 == "L"; then
- res=`wc -l $1`
+elif test -f $1 && (test $2 = "L" || test $2 = "C" || test $2 = "M"); then #si cumple chequeamos que el parametro de opcion sea VALIDO.
+ if test $2 == "L"; then #si el parametro es valido y es 'L'
+ res=`wc -l $1`  #guardamos en la variable res la cantidad de lineas del script y mostramos por pantalla el resultado
  echo "La cantidad de lineas del archivo es: $res"
- elif test $2 == "C"; then
- res=`wc -m $1`
+ elif test $2 == "C"; then #si el parametro es valido y es 'C'
+ res=`wc -m $1` #guardamos en la variable res la cantidad de caracteres del script y mostramos por pantalla el resultado
  echo "La cantidad de caracteres del archivo es: $res"
- elif test $2 == "M"; then
- res=`wc -L $1`
+ elif test $2 == "M"; then #si el parametro es valido y es 'M'
+ res=`wc -L $1` #guardamos en la variable res la cantidad maxima de caracteres en una linea del script y mostramos por pantalla el resultado
  echo "La cantidad maxima de caracteres en una linea es: $res"
  fi
-else
+else  #si el parametro de opcion no es valido, llamamos a la funcion ErrorS con todos los detalles para el uso del script
  ErrorS
 fi
 
