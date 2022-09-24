@@ -64,38 +64,38 @@ vaciar(){ #listo
 
 recuperar(){ #listo
 
-    if [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -gt 1 ]]; then
-        grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%d - %s %s\n", NR, $1, $2}'
+    if [[ `cat $logPath | grep -w "$1" | awk 'END{print NR}'` -gt 1 ]]; then
+        grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%d - %s %s\n", NR, $1, $2}'
         echo "Cual queres recuperar?"
         read archNum
-        nuevoNombre="`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) printf "%s|%d" , $1, $3}'`"
-        IDarch=`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $3}'`
+        nuevoNombre="`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) printf "%s|%d" , $1, $3}'`"
+        IDarch=`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $3}'`
         mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
 
         #si es un file
         if [[ -f $papeleraPath/"$1" ]]; then
-            cp $papeleraPath/"$1" "`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`"
+            cp $papeleraPath/"$1" "`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`"
             rm $papeleraPath/"$1" 
         #si es un dir
         elif [[ -d $papeleraPath/"$1" ]]; then 
-            cp -r $papeleraPath/"$1" "`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`" 
+            cp -r $papeleraPath/"$1" "`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`" 
             rm -r $papeleraPath/"$1" 
         fi
 
         sed -i "/$IDarch/d" $logPath
 
 
-    elif [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -eq 1 ]]; then
-        nuevoNombre="`grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'`" #consigo el nuevo nombre del archivo dentro de la papelera
+    elif [[ `cat $logPath | grep -w "$1" | awk 'END{print NR}'` -eq 1 ]]; then
+        nuevoNombre="`grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'`" #consigo el nuevo nombre del archivo dentro de la papelera
         mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" #le cambio el nombre al original
 
         #si es un file
         if [[ -f $papeleraPath/"$1" ]]; then
-            cp $papeleraPath/"$1" "`grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $2}'`" 
+            cp $papeleraPath/"$1" "`grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $2}'`" 
             rm $papeleraPath/"$1" 
         #si es un dir
         elif [[ -d $papeleraPath/"$1" ]]; then 
-            cp -r $papeleraPath/"$1" "`grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $2}'`" 
+            cp -r $papeleraPath/"$1" "`grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $2}'`" 
             rm -r $papeleraPath/"$1"
         fi
 
@@ -125,12 +125,12 @@ eliminar(){ #listo
 }
 
 borrar(){
-    if [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -gt 1 ]]; then
-        grep "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%d - %s %s\n", NR, $1, $2}'
+    if [[ `cat $logPath | grep -w "$1" | awk 'END{print NR}'` -gt 1 ]]; then
+        grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%d - %s %s\n", NR, $1, $2}'
         echo "Cual queres borrar?"
         read archNum
         nuevoNombre=`cat $logPath | grep $1 | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) printf "%s|%d" , $1, $3}'` 
-        IDarch=`grep "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $3}'`
+        IDarch=`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $3}'`
         mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
 
         #si es un file
@@ -144,8 +144,8 @@ borrar(){
         sed -i "/$IDarch/d" $logPath
 
 
-    elif [[ `cat $logPath | grep "$1" | awk 'END{print NR}'` -eq 1 ]]; then
-        nuevoNombre=`cat $logPath | grep "$1" | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'` 
+    elif [[ `cat $logPath | grep -w "$1" | awk 'END{print NR}'` -eq 1 ]]; then
+        nuevoNombre=`cat $logPath | grep -w "$1" | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'` 
         mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
 
         #si es un file
@@ -164,9 +164,8 @@ borrar(){
 }
 
 
-
 #si no existe la papelera, la creo
-if [[ -d $papeleraPath ]]
+if [[ -d $papeleraPath || -f $papeleraPath ]]
 then
     if [[ -f $logPath ]]; then
         echo "La papelera ya existe" >> script.log
