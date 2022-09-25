@@ -39,6 +39,27 @@ function delete() {
     "{0},{1},{2},{3}" -f $originalFileName,$newFileName,$deleteDate,$directory | Add-Content -path $csvFile
 } 
 
+function remove() {
+    Param (
+        [string] $registers,
+        [string] $recycleBinPath,
+        [string] $fileName
+    )
+
+    $coincidencias = $registers | Select-String "$fileName" 
+    <#$zip = [IO.Compression.ZipFile]::OpenRead($recycleBinPath)
+    $entries = $zip.Entries | where {$_.FullName -like 'myzipdir/c/*'} 
+
+    #create dir for result of extraction
+    New-Item -ItemType Directory -Path "c:\temp\c" -Force
+
+    #extraction
+    $entries | foreach {[IO.Compression.ZipFileExtensions]::ExtractToFile( $_, "c:\temp\c\" + $_.Name) }
+
+    #free object
+    $zip.Dispose()#>
+} 
+
 $registerCsvFile = './registros.csv'
 $recycleBinPath = "$home/recycleBin.Zip"
 
@@ -47,6 +68,6 @@ $registers = Import-Csv -Path $registerCsvFile -Header $header
 #$registers | Format-Table
 
 #list $registers
-delete "../Ejercicio4/Mati" $registerCsvFile $recycleBinPath
+#delete "Mati" $registerCsvFile $recycleBinPath
 
-#remove $register
+remove $register $recycleBinPath "Mati"
