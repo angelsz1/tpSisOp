@@ -115,8 +115,6 @@ foreach($line in $archivo) {
 $total=$comentarios+$codigos
 $porcentajeComentario=$comentarios*100/$total
 $porcentajeCodigo=$codigos*100/$total
-Write-Output "Comentarios: $comentarios"
-Write-Output "Porcentaje comentarios: $porcentajeComentario"
-Write-Output "Codigo: $codigos"
-Write-Output "Porcentaje comentarios: $porcentajeCodigo"
-
+"|{0,-11}|{1,9}|{2,11}|" -f "", "Cantidad", "Porcentaje"
+"|{0,-11}|{1,9}|{2,10:n2}%|" -f "Comentarios", $comentarios, $porcentajeComentario
+"|{0,-11}|{1,9}|{2,10:n2}%|" -f "Codigo", $codigos, $porcentajeCodigo
