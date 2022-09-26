@@ -24,24 +24,44 @@ Nota: si quiere hacer referencia a un archivo o directorio con espacios, debe en
     .\ejercicio-4.ps1 --eliminar ../archivo
 #>
 
-<#
 Param(
-    [Parameter(ParameterSetName = --listar)]
-    [Parameter(ParameterSetName = --recuperar)]
-    [Parameter(ParameterSetName = --vaciar)]
-    [Parameter(ParameterSetName = --eliminar)]
-    [Parameter(ParameterSetName = --borrar)]
+
+  [Parameter(ParameterSetName='listar')]
+  [Parameter(Position = 1)]
+  [Switch]
+  $listar,
+
+  [Parameter(ParameterSetName='eliminar')]
+  [Parameter(Position = 1)]
+  [String]
+  $eliminar,
+
+  [Parameter(ParameterSetName='vaciar')]
+  [Parameter(Position = 1)]
+  [Switch]
+  $vaciar,
+
+  [Parameter(ParameterSetName='borrar')]
+  [Parameter(Position = 1)]
+  [String]
+  $borrar,
+
+  [Parameter(ParameterSetName='recuperar')]
+  [Parameter(Position = 1)]
+  [String]
+  $recuperar
+
 )
-#>
 
 function list() { 
     Param (
         $register
-)
+    )
+    
     if ($register.Count -gt 0) {
-        "|{0,-11}|{1,20}|{2,14}|" -f "Name", "Original Location", "Date Deleted"
+        "|{0,-11}|{1,-22}|{2,-20}" -f "Name", "Date Deleted", "Original Location"
         foreach ($register in $registers) {
-            "|{0,-11}|{1,20}|{2,14}|" -f $register.originaloriginalFileName, $register.path, $register.dateDeleted
+            "|{0,-11}|{1,-22}|{2,-20}" -f $register.FileName, $register.dateDeleted, $register.path
         }
     } else {
         Write-Host "La papelera esta vacia"
@@ -100,29 +120,60 @@ function remove() {
     )
 
     $coincidencias = $registers | Select-String "$fileName" 
-    <#$zip = [IO.Compression.ZipFile]::OpenRead($recycleBinPath)
-    $entries = $zip.Entries | where {$_.FullName -like 'myzipdir/c/*'} 
-
-    #create dir for result of extraction
-    New-Item -ItemType Directory -Path "c:\temp\c" -Force
-
-    #extraction
-    $entries | foreach {[IO.Compression.ZipFileExtensions]::ExtractToFile( $_, "c:\temp\c\" + $_.Name) }
-
-    #free object
-    $zip.Dispose()#>
 } 
 
+function crearPapelera() {
+    Param (
+        [string] $archivoClave,
+        [string] $recycleBinPath
+    )
+
+    New-Item $archivoClave -ItemType File
+    Compress-Archive -Path $archivoClave -DestinationPath $recycleBinPath -CompressionLevel Optimal -Update
+    Remove-Item $archivoClave
+}
+
 $registerCsvFile = './registros.csv'
-$recycleBinPath = "$home/recycleBin.Zip"
+$recycleBinPath = "$home/papelera.Zip"
+$archivoClave = "AgosMatiVictorAngelFacu.txt"
+
+try {
+    $zip = [IO.Compression.ZipFile]::OpenRead($recycleBinPath)  
+    if($zip) {
+        $entries = $zip.Entries | where {$_.FullName -like $archivoClave} 
+        if(!$entries) {
+            $zip.Dispose()
+            Remove-Item $recycleBinPath
+            Write-Output "Borrando Papelera"
+            crearPapelera $archivoClave $recycleBinPath
+        }
+    }
+    $zip.Dispose()
+}
+catch [Exception] {
+    crearPapelera $archivoClave $recycleBinPath
+}
+
+<#$entries = $zip.Entries | where {$_.FullName -like 'myzipdir/c/*'} 
+
+New-Item -ItemType Directory -Path "c:\temp\c" -Force
+
+$entries | foreach {[IO.Compression.ZipFileExtensions]::ExtractToFile( $_, "c:\temp\c\" + $_.Name) }
+
+#>
 
 $header = @('FileName','removedFileName','dateDeleted','path')
 $registers = Import-Csv -Path $registerCsvFile -Header $header 
-#$registers | Format-Table
 
-#list $registers
-#delete "Mati" $registerCsvFile $recycleBinPath
-empty $registers $registerCsvFile $recycleBinPath
+if($listar) {
+    list $registers
+} elseif($eliminar) {
+    delete $eliminar $registerCsvFile $recycleBinPath
+} elseif($vaciar) {
+    Write-Output "Quiero vaciar"
+}
+
+#empty $registers $registerCsvFile $recycleBinPath
 
 #FALTAAAA
 #remove $register $recycleBinPath "Mati"
