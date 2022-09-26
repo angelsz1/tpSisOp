@@ -53,22 +53,24 @@ Param(
 
 )
 
-function list() { 
+function listar() { 
     Param (
         $register
     )
     
     if ($register.Count -gt 0) {
-        "|{0,-11}|{1,-22}|{2,-20}" -f "Name", "Date Deleted", "Original Location"
+        $id=0
+        "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f "Id","Name", "Date Deleted", "Original Location"
         foreach ($register in $registers) {
-            "|{0,-11}|{1,-22}|{2,-20}" -f $register.FileName, $register.dateDeleted, $register.path
+            $id++
+            "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f $id, $register.FileName, $register.dateDeleted, $register.path
         }
     } else {
         Write-Host "La papelera esta vacia"
     }
 }
 
-function delete() {
+function eliminar() {
     Param (
         [string] $path,
         [string] $csvFile,
@@ -95,7 +97,7 @@ function delete() {
     "{0},{1},{2},{3}" -f $originalFileName,$newFileName,$deleteDate,$directory | Add-Content -path $csvFile
 } 
 
-function empty () {
+function vaciar () {
     Param (
         [string] $registers,
         [string] $registerCsvFile,
@@ -103,8 +105,8 @@ function empty () {
     )
 
     if ($registers.Count -gt 0) {
-        Get-ChildItem $recycleBinPath -Recurse | Remove-Item -Force #vacia la papelera pero no la elimina
-        Set-Content -Value "" -path $registerCsvFile    #sobreescribe con NADA el arch csv
+        Remove-Item $recycleBinPath -Recurse
+        Set-Content -Value "" -path $registerCsvFile
     }
     else
     {
@@ -112,14 +114,48 @@ function empty () {
     }
 }
 
-function remove() {
+function borrar() {
     Param (
-        [string] $registers,
+        $registers,
         [string] $recycleBinPath,
-        [string] $fileName
+        [string] $fileName,
+        [string] $registerCsvFile
     )
 
-    $coincidencias = $registers | Select-String "$fileName" 
+    $registrosABorrar = $registers | Where { $fileName -eq $_.FileName }
+
+    if(!$registrosABorrar) {
+        Write-Warning "El archivo $fileName no se encuentra en la papelera"
+        Exit
+    } 
+
+    if ($registrosABorrar.Count -gt 1) {
+        listar $registrosABorrar
+        $archivo = Read-Host "¿Qué archivo desea recuperar? (Ingrese Id)" 
+        $registroABorrar = $registrosABorrar[$archivo-1]
+    } else {
+        $registroABorrar = $registrosABorrar[0]
+    }
+
+    $registers = $registers | Where { $registroABorrar.removedFileName -ne $_.removedFileName }
+    Remove-Item $registerCsvFile
+    foreach ($registro in $registers) {
+        "{0},{1},{2},{3}" -f $registro.FileName, $registro.removedFileName, $registro.deleteDate, $registro.path | Add-Content -path $registerCsvFile
+    }
+
+    $update = 2
+    $zip = [IO.Compression.ZipFile]::Open($recycleBinPath, $update)  
+    if($zip) {
+        $entries = $zip.Entries | where {$_.Name -like $registroABorrar.removedFileName} 
+        if(!$entries) {
+            $zip.Dispose()
+            Write-Error "Error Borrando Archivo"
+            Exit
+        }
+        $entries[0].Delete()
+    }
+    $zip.Dispose()
+
 } 
 
 function crearPapelera() {
@@ -128,7 +164,7 @@ function crearPapelera() {
         [string] $recycleBinPath
     )
 
-    New-Item $archivoClave -ItemType File
+    New-Item $archivoClave -ItemType File | Out-Null
     Compress-Archive -Path $archivoClave -DestinationPath $recycleBinPath -CompressionLevel Optimal -Update
     Remove-Item $archivoClave
 }
@@ -166,15 +202,12 @@ $header = @('FileName','removedFileName','dateDeleted','path')
 $registers = Import-Csv -Path $registerCsvFile -Header $header 
 
 if($listar) {
-    list $registers
+    listar $registers
 } elseif($eliminar) {
-    delete $eliminar $registerCsvFile $recycleBinPath
+    eliminar $eliminar $registerCsvFile $recycleBinPath
 } elseif($vaciar) {
-    Write-Output "Quiero vaciar"
+    vaciar $registers $registerCsvFile $recycleBinPath
+} elseif($borrar) {
+    borrar $registers $recycleBinPath $borrar $registerCsvFile
 }
-
-#empty $registers $registerCsvFile $recycleBinPath
-
-#FALTAAAA
-#remove $register $recycleBinPath "Mati"
 
