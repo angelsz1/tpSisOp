@@ -72,24 +72,25 @@ function listar() {
 
 function eliminar() {
     Param (
-        [string] $path,
+        [string] $rutaAEliminar,
         [string] $csvFile,
         [string] $recycleBinPath
     )
 
-    if (-Not (Test-Path $path)) {
-        Write-Warning "Path invalido. $path no encontrado"
+    if (-Not (Test-Path $rutaAEliminar)) {
+        Write-Warning "Path invalido. $rutaAEliminar no encontrado"
         Exit
     }
     
-    $deleteDate = Get-Date
-    $deleteFileTime = [Math]::Round(($deleteDate).ToFileTimeUTC()/10000)
-    $directory = Get-ChildItem $path | % { $_.Directory.FullName }
-    $originalFileName = Split-Path $path -leaf
-    $newFileName = $originalFileName+$deleteFileTime
+    $fecha = Get-Date
+    $randomNumber = [Math]::Round(($fecha).ToFileTimeUTC()/10000)
+    $nombre = Get-Item $rutaAEliminar | % { $_.Name }
+    $fullPath = Get-Item $rutaAEliminar | % { $_.FullName }
+    $rutaSinNombre = $fullPath.substring(0, ($fullPath.length - $nombre.length -1))
 
-    Rename-Item -Path $path -NewName $newFileName
-    $newPath = "$directory/$newFileName"
+    $nuevoNombre = $nombre+$randomNumber
+    Rename-Item -Path $rutaAEliminar -NewName $nuevoNombre
+    $newPath = "$rutaSinNombre/$nuevoNombre"
 
     $compress = @{
         Path = $newPath
@@ -98,8 +99,9 @@ function eliminar() {
       }
       Compress-Archive @compress -Update
 
-    Remove-Item -Path $newPath
-    "{0},{1},{2},{3}" -f $originalFileName,$newFileName,$deleteDate,$directory | Add-Content -path $csvFile
+    Remove-Item -Path $newPath -Force -Recurse
+    "{0},{1},{2},{3}" -f $nombre,$nuevoNombre,$fecha,$rutaSinNombre | Add-Content -path $csvFile
+
 } 
 
 function vaciar () {
