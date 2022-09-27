@@ -242,7 +242,15 @@ function recuperar() {
             $entry.Delete()
         }
         Rename-Item -Path "$($registroARecuperar.Path)/$($registroARecuperar.RemovedFileName)" -NewName $registroARecuperar.FileName
-        Write-Host "$($registroARecuperar.FileName) recuperado exitosamente"
+        if($?)
+        {
+            Write-Host "$($registroARecuperar.FileName) recuperado exitosamente"
+        }
+        else
+        {
+            Write-Host "Se ha recuperado $($registroARecuperar.FileName) con el nombre $($registroARecuperar.RemovedFileName) "
+        }
+        
     }
     $zip.Dispose()
 }
