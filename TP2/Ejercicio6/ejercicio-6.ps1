@@ -84,8 +84,8 @@ function eliminar() {
     
     $fecha = Get-Date
     $randomNumber = [Math]::Round(($fecha).ToFileTimeUTC()/10000)
-    $nombre = Get-Item $rutaAEliminar | % { $_.Name }
-    $fullPath = Get-Item $rutaAEliminar | % { $_.FullName }
+    $nombre = Get-Item $rutaAEliminar | ForEach-Object { $_.Name }
+    $fullPath = Get-Item $rutaAEliminar | ForEach-Object { $_.FullName }
     $rutaSinNombre = $fullPath.substring(0, ($fullPath.length - $nombre.length -1))
 
     $nuevoNombre = $nombre+$randomNumber
@@ -129,7 +129,7 @@ function borrar() {
         [string] $registerCsvFile
     )
 
-    $registrosABorrar = $registers | Where { $fileName -eq $_.FileName }
+    $registrosABorrar = $registers | Where-Object { $fileName -eq $_.FileName }
 
     if(!$registrosABorrar) {
         Write-Warning "El archivo $fileName no se encuentra en la papelera"
@@ -144,7 +144,7 @@ function borrar() {
         $registroABorrar = $registrosABorrar[0]
     }
 
-    $registers = $registers | Where { $registroABorrar.removedFileName -ne $_.removedFileName }
+    $registers = $registers | Where-Object { $registroABorrar.removedFileName -ne $_.removedFileName }
     Remove-Item $registerCsvFile
     foreach ($registro in $registers) {
         "{0},{1},{2},{3}" -f $registro.FileName, $registro.removedFileName, $registro.deleteDate, $registro.path | Add-Content -path $registerCsvFile
@@ -165,6 +165,7 @@ function borrar() {
     }
     $zip.Dispose()
 
+    Write-Host "$fileName borrado de la papelera" -ForegroundColor DarkGreen
 } 
 
 function crearPapelera() {
@@ -192,7 +193,7 @@ $archivoClave = "AgosMatiVictorAngelFacu.txt"
 try {
     $zip = [IO.Compression.ZipFile]::OpenRead($recycleBinPath)  
     if($zip) {
-        $entries = $zip.Entries | where {$_.FullName -like $archivoClave} 
+        $entries = $zip.Entries | Where-Object {$_.FullName -like $archivoClave} 
         if(!$entries) {
             $zip.Dispose()
             Remove-Item $recycleBinPath
