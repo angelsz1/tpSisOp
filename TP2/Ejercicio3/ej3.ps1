@@ -147,3 +147,6 @@ $watcher.EnableRaisingEvents = $true
       Wait-Event -Timeout 1
     } while ($true)
   
+
+#para matarlo
+#Get-EventSubscriber | Unregister-Event
