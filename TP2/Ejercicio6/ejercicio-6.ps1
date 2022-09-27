@@ -77,6 +77,11 @@ function eliminar() {
         [string] $recycleBinPath
     )
 
+    if (-Not (Test-Path $path)) {
+        Write-Warning "Path invalido. $path no encontrado"
+        Exit
+    }
+    
     $deleteDate = Get-Date
     $deleteFileTime = [Math]::Round(($deleteDate).ToFileTimeUTC()/10000)
     $directory = Get-ChildItem $path | % { $_.Directory.FullName }
