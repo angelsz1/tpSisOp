@@ -55,15 +55,15 @@ Param(
 
 function listar() { 
     Param (
-        $register
+        $registros
     )
     
-    if ($register.Count -gt 0) {
+    if ($registros.Count -gt 0) {
         $id=0
-        "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f "Id","Name", "Date Deleted", "Original Location"
-        foreach ($register in $registers) {
+        "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f "Id","Name", "Date Deleted", "Original Location" | Write-Host -ForegroundColor DarkGreen
+        foreach ($registro in $registros) {
             $id++
-            "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f $id, $register.FileName, $register.dateDeleted, $register.path
+            "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f $id, $registro.FileName, $registro.dateDeleted, $registro.path | Write-Host
         }
     } else {
         Write-Host "La papelera esta vacia"
