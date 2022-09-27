@@ -81,6 +81,25 @@ function seleccionarRegistro() {
     return $registroSeleccionado
 }
 
+function removerItemDelCsv() {
+    Param (
+        [Object] $registros,
+        [Object] $registroABorrar,
+        [String] $archivoCsv
+    )
+
+    $registros = $registros | Where-Object { $registroABorrar.RemovedFileName -ne $_.RemovedFileName }
+    Remove-Item $archivoCsv
+
+    if($registros.Count -eq 0) {
+        Set-Content -Value "" -path $archivoCsv
+    } else {
+        foreach ($registro in $registros) {
+            "{0},{1},{2},{3}" -f $registro.FileName, $registro.RemovedFileName, $registro.DateDeleted, $registro.Path | Add-Content -path $archivoCsv
+        }
+    }
+}
+
 function listar() { 
     Param (
         [Object] $registros
@@ -158,17 +177,7 @@ function borrar() {
     )
 
     $registroABorrar = seleccionarRegistro $registros
-
-    $registros = $registros | Where-Object { $registroABorrar.RemovedFileName -ne $_.RemovedFileName }
-    Remove-Item $archivoCsv
-
-    if($registros.Count -eq 0) {
-        Set-Content -Value "" -path $archivoCsv
-    } else {
-        foreach ($registro in $registros) {
-            "{0},{1},{2},{3}" -f $registro.FileName, $registro.RemovedFileName, $registro.DateDeleted, $registro.Path | Add-Content -path $archivoCsv
-        }
-    }
+    removerItemDelCsv $registros $registroABorrar $archivoCsv
 
     $update = 2
     $zip = [IO.Compression.ZipFile]::Open($papelera, $update)  
@@ -191,11 +200,32 @@ function borrar() {
 function recuperar() {
     Param (
         [String] $fileName,
+        [Object] $registros,
         [String] $papelera,
-        [Object] $registros
+        [String] $archivoCsv
     )
 
-    registroARecuperar = seleccionarRegistro $registros
+    $registroARecuperar = seleccionarRegistro $registros
+    removerItemDelCsv $registros $registroARecuperar $archivoCsv
+
+    $update = 2
+    $zip = [IO.Compression.ZipFile]::Open($papelera, $update)  
+    if($zip) {
+        $entries = $zip.Entries | Where-Object { $_.FullName.StartsWith($registroABorrar.RemovedFileName) }
+        $entries
+        if(!$entries) {
+            $zip.Dispose()
+            Write-Error "Error Recuperando Archivo"
+            Exit
+        }
+        foreach($entry in $entries) {
+            $destino = "$registroARecuperar.Path/$entry.FullName"
+            $destino
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destino)
+            #$entry.Delete()
+        }
+    }
+    $zip.Dispose()
 }
 
 function crearPapelera() {
@@ -249,6 +279,6 @@ if($listar) {
 } elseif($borrar) {
     borrar $borrar $registros $papelera $archivoCsv
 } elseif($recuperar) {
-    recuperar $recuperar $papelera $registros
+    recuperar $recuperar $registros $papelera $archivoCsv
 }
 
