@@ -55,7 +55,7 @@ Param(
 
 function listar() { 
     Param (
-        $registros
+        [Object] $registros
     )
     
     if ($registros.Count -gt 0) {
@@ -72,9 +72,9 @@ function listar() {
 
 function eliminar() {
     Param (
-        [string] $rutaAEliminar,
-        [string] $csvFile,
-        [string] $recycleBinPath
+        [String] $rutaAEliminar,
+        [String] $csvFile,
+        [String] $recycleBinPath
     )
 
     if (-Not (Test-Path $rutaAEliminar)) {
@@ -86,7 +86,7 @@ function eliminar() {
     $randomNumber = [Math]::Round(($fecha).ToFileTimeUTC()/10000)
     $nombre = Get-Item $rutaAEliminar | ForEach-Object { $_.Name }
     $fullPath = Get-Item $rutaAEliminar | ForEach-Object { $_.FullName }
-    $rutaSinNombre = $fullPath.substring(0, ($fullPath.length - $nombre.length -1))
+    $rutaSinNombre = $fullPath.subString(0, ($fullPath.length - $nombre.length -1))
 
     $nuevoNombre = $nombre+$randomNumber
     Rename-Item -Path $rutaAEliminar -NewName $nuevoNombre
@@ -106,12 +106,12 @@ function eliminar() {
 
 function vaciar () {
     Param (
-        [string] $registers,
-        [string] $registerCsvFile,
-        [string] $recycleBinPath
+        [Object] $registros,
+        [String] $registerCsvFile,
+        [String] $recycleBinPath
     )
 
-    if ($registers.Count -gt 0) {
+    if ($registros.Count -gt 0) {
         Remove-Item $recycleBinPath -Recurse
         Set-Content -Value "" -path $registerCsvFile
     }
@@ -123,13 +123,13 @@ function vaciar () {
 
 function borrar() {
     Param (
-        $registers,
-        [string] $recycleBinPath,
-        [string] $fileName,
-        [string] $registerCsvFile
+        [Object] $registros,
+        [String] $recycleBinPath,
+        [String] $fileName,
+        [String] $registerCsvFile
     )
 
-    $registrosABorrar = $registers | Where-Object { $fileName -eq $_.FileName }
+    $registrosABorrar = $registros | Where-Object { $fileName -eq $_.FileName }
 
     if(!$registrosABorrar) {
         Write-Warning "El archivo $fileName no se encuentra en la papelera"
@@ -144,10 +144,15 @@ function borrar() {
         $registroABorrar = $registrosABorrar[0]
     }
 
-    $registers = $registers | Where-Object { $registroABorrar.removedFileName -ne $_.removedFileName }
+    $registros = $registros | Where-Object { $registroABorrar.removedFileName -ne $_.removedFileName }
     Remove-Item $registerCsvFile
-    foreach ($registro in $registers) {
-        "{0},{1},{2},{3}" -f $registro.FileName, $registro.removedFileName, $registro.deleteDate, $registro.path | Add-Content -path $registerCsvFile
+
+    if($registros.Count -eq 0) {
+        Set-Content -Value "" -path $registerCsvFile
+    } else {
+        foreach ($registro in $registros) {
+            "{0},{1},{2},{3}" -f $registro.FileName, $registro.removedFileName, $registro.deleteDate, $registro.path | Add-Content -path $registerCsvFile
+        }
     }
 
     $update = 2
@@ -168,11 +173,22 @@ function borrar() {
     Write-Host "$fileName borrado de la papelera" -ForegroundColor DarkGreen
 } 
 
+function recuperar() {
+    Param (
+        [String] $fileName,
+        [String] $recycleBinPath,
+        [Object] $registros
+    )
+
+    Write-Host "recuperar $fileName"
+    listar $registros
+}
+
 function crearPapelera() {
     Param (
-        [string] $archivoClave,
-        [string] $recycleBinPath,
-        [string] $registerCsvFile
+        [String] $archivoClave,
+        [String] $recycleBinPath,
+        [String] $registerCsvFile
     )
 
     New-Item $archivoClave -ItemType File | Out-Null
@@ -208,15 +224,17 @@ catch [Exception] {
 }
 
 $header = @('FileName','removedFileName','dateDeleted','path')
-$registers = Import-Csv -Path $registerCsvFile -Header $header 
+$registros = Import-Csv -Path $registerCsvFile -Header $header 
 
 if($listar) {
-    listar $registers
+    listar $registros
 } elseif($eliminar) {
     eliminar $eliminar $registerCsvFile $recycleBinPath
 } elseif($vaciar) {
-    vaciar $registers $registerCsvFile $recycleBinPath
+    vaciar $registros $registerCsvFile $recycleBinPath
 } elseif($borrar) {
-    borrar $registers $recycleBinPath $borrar $registerCsvFile
+    borrar $registros $recycleBinPath $borrar $registerCsvFile
+} elseif($recuperar) {
+    recuperar $recuperar $recycleBinPath $registros
 }
 
