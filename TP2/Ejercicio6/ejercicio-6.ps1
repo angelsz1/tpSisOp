@@ -153,6 +153,7 @@ function eliminar() {
       Compress-Archive @compress -Update
 
     Remove-Item -Path $newPath -Force -Recurse
+    Write-Host "$nombre eliminado exitosamente"
     "{0},{1},{2},{3},{4}" -f $nombre,$tipo,$nuevoNombre,$fecha,$rutaSinNombre | Add-Content -path $csvFile
 } 
 
