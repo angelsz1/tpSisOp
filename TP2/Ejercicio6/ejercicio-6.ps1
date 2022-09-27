@@ -29,7 +29,7 @@ Nota: si quiere hacer referencia a un archivo o directorio con espacios, debe en
     vaciar: Vacia la papelera
 
 .EXAMPLE
-    .\ejercicio-4.ps1 --eliminar ../archivo
+    .\ejercicio-6.ps1 --eliminar ../archivo
 #>
 
 Param(
@@ -242,7 +242,15 @@ function recuperar() {
             $entry.Delete()
         }
         Rename-Item -Path "$($registroARecuperar.Path)/$($registroARecuperar.RemovedFileName)" -NewName $registroARecuperar.FileName
-        Write-Host "$($registroARecuperar.FileName) recuperado exitosamente"
+        if($?)
+        {
+            Write-Host "$($registroARecuperar.FileName) recuperado exitosamente"
+        }
+        else
+        {
+            Write-Host "Se ha recuperado $($registroARecuperar.FileName) con el nombre $($registroARecuperar.RemovedFileName) "
+        }
+        
     }
     $zip.Dispose()
 }
