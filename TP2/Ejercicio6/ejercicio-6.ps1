@@ -95,7 +95,7 @@ function removerItemDelCsv() {
         New-Item -path $archivoCsv | Out-Null
     } else {
         foreach ($registro in $registros) {
-            "{0},{1},{2},{3}" -f $registro.FileName, $registro.RemovedFileName, $registro.DateDeleted, $registro.Path | Add-Content -path $archivoCsv
+            "{0},{1},{2},{3},{4}" -f $registro.FileName, $registro.Type, $registro.RemovedFileName, $registro.DateDeleted, $registro.Path | Add-Content -path $archivoCsv
         }
     }
 }
@@ -107,10 +107,10 @@ function listar() {
     
     if ($registros.Count -gt 0) {
         $id=0
-        "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f "Id","Name", "Date Deleted", "Original Location" | Write-Host -ForegroundColor DarkGreen
+        "|{0,-4}|{1,-20}|{2,-8}|{3,-22}|{4,-20}" -f "Id","Name","Type", "Date Deleted", "Original Location" | Write-Host -ForegroundColor DarkGreen
         foreach ($registro in $registros) {
             $id++
-            "|{0,-4}|{1,-11}|{2,-22}|{3,-20}" -f $id, $registro.FileName, $registro.DateDeleted, $registro.Path | Write-Host
+            "|{0,-4}|{1,-20}|{2,-8}|{3,-22}|{4,-20}" -f $id, $registro.FileName, $registro.Type, $registro.DateDeleted, $registro.Path | Write-Host
         }
     } else {
         Write-Host "La papelera esta vacia"
@@ -127,6 +127,12 @@ function eliminar() {
     if (-Not (Test-Path $rutaAEliminar)) {
         Write-Warning "Path invalido. $rutaAEliminar no encontrado"
         Exit
+    } else {
+        if(Test-Path -Path $rutaAEliminar -PathType Leaf) {
+            $tipo = "Archivo"
+        } else {
+            $tipo = "Carpeta"
+        }
     }
     
     $fecha = Get-Date
@@ -147,8 +153,7 @@ function eliminar() {
       Compress-Archive @compress -Update
 
     Remove-Item -Path $newPath -Force -Recurse
-    "{0},{1},{2},{3}" -f $nombre,$nuevoNombre,$fecha,$rutaSinNombre | Add-Content -path $csvFile
-
+    "{0},{1},{2},{3},{4}" -f $nombre,$tipo,$nuevoNombre,$fecha,$rutaSinNombre | Add-Content -path $csvFile
 } 
 
 function vaciar () {
@@ -271,7 +276,7 @@ catch [Exception] {
     crearPapelera $archivoClave $papelera $archivoCsv
 }
 
-$header = @('FileName','RemovedFileName','DateDeleted','Path')
+$header = @('FileName','Type','RemovedFileName','DateDeleted','Path')
 $registros = Import-Csv -Path $archivoCsv -Header $header 
 
 if($listar) {
