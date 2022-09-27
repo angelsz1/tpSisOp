@@ -92,7 +92,7 @@ function removerItemDelCsv() {
     Remove-Item $archivoCsv
 
     if($registros.Count -eq 0) {
-        Set-Content -Value "" -path $archivoCsv
+        New-Item -path $archivoCsv | Out-Null
     } else {
         foreach ($registro in $registros) {
             "{0},{1},{2},{3}" -f $registro.FileName, $registro.RemovedFileName, $registro.DateDeleted, $registro.Path | Add-Content -path $archivoCsv
@@ -161,9 +161,7 @@ function vaciar () {
     if ($registros.Count -gt 0) {
         Remove-Item $papelera -Recurse
         Set-Content -Value "" -path $archivoCsv
-    }
-    else
-    {
+    } else {
         Write-Host "La papelera ya esta vacia"
     }
 }
@@ -211,19 +209,25 @@ function recuperar() {
     $update = 2
     $zip = [IO.Compression.ZipFile]::Open($papelera, $update)  
     if($zip) {
-        $entries = $zip.Entries | Where-Object { $_.FullName.StartsWith($registroABorrar.RemovedFileName) }
-        $entries
+        $entries = $zip.Entries | Where-Object { $_.FullName.StartsWith($registroARecuperar.RemovedFileName) }
         if(!$entries) {
             $zip.Dispose()
             Write-Error "Error Recuperando Archivo"
             Exit
         }
         foreach($entry in $entries) {
-            $destino = "$registroARecuperar.Path/$entry.FullName"
-            $destino
+            $destino = "$($registroARecuperar.Path)/$($entry.FullName)"
+            $parent = Split-Path -Parent $destino
+
+            while (-not (Test-Path -LiteralPath $parent)) {
+                New-Item -Path $parent -Type Directory | Out-Null
+                $parent = Split-Path -Parent $parent
+            }
+
             [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destino)
-            #$entry.Delete()
+            $entry.Delete()
         }
+        Rename-Item -Path "$($registroARecuperar.Path)/$($registroARecuperar.RemovedFileName)" -NewName $registroARecuperar.FileName
     }
     $zip.Dispose()
 }
