@@ -161,12 +161,19 @@ function borrar() {
 function crearPapelera() {
     Param (
         [string] $archivoClave,
-        [string] $recycleBinPath
+        [string] $recycleBinPath,
+        [string] $registerCsvFile
     )
 
     New-Item $archivoClave -ItemType File | Out-Null
     Compress-Archive -Path $archivoClave -DestinationPath $recycleBinPath -CompressionLevel Optimal -Update
     Remove-Item $archivoClave
+    
+    if( Test-Path $registerCsvFile )
+    {
+        Remove-Item $registerCsvFile
+    }
+    New-Item $registerCsvFile | Out-Null
 }
 
 $registerCsvFile = './registros.csv'
@@ -181,7 +188,7 @@ try {
             $zip.Dispose()
             Remove-Item $recycleBinPath
             Write-Output "Borrando Papelera"
-            crearPapelera $archivoClave $recycleBinPath
+            crearPapelera $archivoClave $recycleBinPath $registerCsvFile
         }
     }
     $zip.Dispose()
