@@ -207,14 +207,6 @@ catch [Exception] {
     crearPapelera $archivoClave $recycleBinPath $registerCsvFile
 }
 
-<#$entries = $zip.Entries | where {$_.FullName -like 'myzipdir/c/*'} 
-
-New-Item -ItemType Directory -Path "c:\temp\c" -Force
-
-$entries | foreach {[IO.Compression.ZipFileExtensions]::ExtractToFile( $_, "c:\temp\c\" + $_.Name) }
-
-#>
-
 $header = @('FileName','removedFileName','dateDeleted','path')
 $registers = Import-Csv -Path $registerCsvFile -Header $header 
 
