@@ -1,0 +1,2 @@
+DNI|IdMateria|PrimerParcial|SegundoParcial|Recuperatorio|Final
+140|1|8|8|||

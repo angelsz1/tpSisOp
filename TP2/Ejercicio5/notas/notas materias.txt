@@ -1,0 +1,7 @@
+IdMateria|Descripcion|Departamento
+3|Sistemas Operativos|3
+2|Programación 1|1
+1|Derecho 1|1
+4|Arquitectura|2
+5|Fisica|2
+6|Matematica|3

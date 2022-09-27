@@ -1,3 +1,40 @@
+#APL N. 2
+#SCRIPT 3
+#INTEGRANTES:
+#Carballo, Facundo Nicolas (DNI: 42774931)
+#Garcia Burgio, Matias Nicolas (DNI: 42649117)
+#Mottura, Agostina Micaela (DNI: 41898101)
+#Povoli Olivera, Victor (DNI: 43103780)
+#Szust, Ángel Elías (DNI: 43098495)
+
+<#
+
+.SYNOPSIS
+    Script que monitorea un directorio y guarda en un archivo de log los archivos que se crean, modifican o eliminan segun los parametros que se le pasen.
+.DESCRIPTION
+    Este script monitorea un directorio a la espera de cambios. Si se detecta algun cambio, se guarda o no determinada informacion dentro de un archivo de log, y se hacen o no distintas acciones.
+# .SYNTAX
+#     .\ej3.ps1 -codigo <String> -acciones <String> [-salida] [<String>] 
+.PARAMETER codigo
+    Define la ruta del directorio a monitorear. Monitorea tambien los subdirectorios.
+.PARAMETER acciones
+    Una lista de acciones separadas con coma a ejecutar cada vez que se detecte un cambio en el directorio. Las acciones posibles son:
+        - listar   : Muestra en un log los archivos que se crearon, modificaron, renombraron o eliminaron.
+        - peso     : Muestra en un log el peso de los archivos que sufrieron cambios.
+        - compilar : Concatena el contenido de los archivos dentro de "codigo" y lo guarda en un archivo llamado "con.out" en el directorio "bin", dentro del path del script."
+        - publicar : Copia el archivo "con.out" del directorio "bin" a la carpeta "salida" pasada por parametro.
+.PARAMETER salida
+    Define la ruta de la carpeta donde se copiara el archivo "con.out" cuando se ejecute la accion "publicar".
+.EXAMPLE
+    Ejemplo de uso:
+        .\ej3.ps1 -codigo "/dir a monitorear" -acciones "listar,peso,compilar,publicar" -salida "../salidas"
+    Este ejemplo monitorea el directorio "/dir a monitorear" y ejecuta las acciones "listar", "peso", "compilar" y "publicar" cada vez que se detecte un cambio en el directorio.
+    La accion "listar" guarda en un log los archivos que se crearon, modificaron, renombraron o eliminaron.
+    La accion "peso" guarda en un log el peso de los archivos que sufrieron cambios.
+    La accion "compilar" concatena el contenido de los archivos dentro de "/dir a monitorear" y lo guarda en "con.out". 
+    La accion "publicar" copia el archivo "con.out" del directorio "bin" a la carpeta "../salidas" pasada por parametro.
+#>
+
 [CmdletBinding()]
 Param(
     [Parameter(Mandatory=$True,Position=0)]

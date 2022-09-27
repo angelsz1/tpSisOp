@@ -1,0 +1,67 @@
+{
+  "departamentos": [
+    {
+      "id": 1,
+      "notas": [
+        {
+          "id_materia": 1,
+          "descripcion": "Derecho 1",
+          "final": 5,
+          "recursan": 9,
+          "abandonaron": 2,
+          "promocionan": 4
+        },
+        {
+          "id_materia": 2,
+          "descripcion": "Programación 1",
+          "final": 7,
+          "recursan": 5,
+          "abandonaron": 1,
+          "promocionan": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "notas": [
+        {
+          "id_materia": 4,
+          "descripcion": "Arquitectura",
+          "final": 2,
+          "recursan": 3,
+          "abandonaron": 1,
+          "promocionan": 2
+        },
+        {
+          "id_materia": 5,
+          "descripcion": "Fisica",
+          "final": 0,
+          "recursan": 2,
+          "abandonaron": 3,
+          "promocionan": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "notas": [
+        {
+          "id_materia": 3,
+          "descripcion": "Sistemas Operativos",
+          "final": 4,
+          "recursan": 6,
+          "abandonaron": 1,
+          "promocionan": 2
+        },
+        {
+          "id_materia": 6,
+          "descripcion": "Matematica",
+          "final": 0,
+          "recursan": 1,
+          "abandonaron": 0,
+          "promocionan": 0
+        }
+      ]
+    }
+  ]
+}
