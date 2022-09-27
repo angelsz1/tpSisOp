@@ -153,13 +153,15 @@ function borrar() {
     $update = 2
     $zip = [IO.Compression.ZipFile]::Open($recycleBinPath, $update)  
     if($zip) {
-        $entries = $zip.Entries | where {$_.Name -like $registroABorrar.removedFileName} 
+        $entries = $zip.Entries | Where-Object { $_.FullName.StartsWith($registroABorrar.removedFileName) }
         if(!$entries) {
             $zip.Dispose()
             Write-Error "Error Borrando Archivo"
             Exit
         }
-        $entries[0].Delete()
+        foreach($entry in $entries) {
+            $entry.Delete()
+        }
     }
     $zip.Dispose()
 
@@ -201,7 +203,7 @@ try {
     $zip.Dispose()
 }
 catch [Exception] {
-    crearPapelera $archivoClave $recycleBinPath
+    crearPapelera $archivoClave $recycleBinPath $registerCsvFile
 }
 
 <#$entries = $zip.Entries | where {$_.FullName -like 'myzipdir/c/*'} 
