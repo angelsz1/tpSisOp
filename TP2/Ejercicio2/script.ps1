@@ -35,17 +35,13 @@ Param(
     [switch]$logs,
     [Parameter(Mandatory = $True, Position = 2)]
     [validateScript({
-        if (-Not ($_ | Test-Path -PathType container))
-        {
-            throw "La ruta ingresada es invalida."
-        }
-        return $true
-    })]
+            if (-Not ($_ | Test-Path -PathType container)) {
+                throw "La ruta ingresada es invalida."
+            }
+            return $true
+        })]
     [string]$path
 )
-
-
-# TODO Verificamos que tengan los permisos de lectura correspondientes
 
 # Declaracion de variables a utilizar
 $timestampInit = Get-Date -Date "01/01/1970"
@@ -73,106 +69,190 @@ $cantidadLlamadasSemanal = 0
 $tiempoDeLlamadaSemanal = 0
 $cantidadDias = 0
 
+# Errores
+$erroresCantidad = 0
+$erroresDescripcion = @()
+
 $diaActual = ""
 
 $files = Get-ChildItem "$path"
 
+function CheckStringToNumber {
+    param (
+        [Parameter(Mandatory = $True, Position = 1)]
+        [string]$number
+    )
 
-foreach ($f in $files) 
-{
+    try {
+        $num = [int]$number
+
+        return $true;
+    }
+    catch {
+        return $false;
+    }
+}
+
+function CheckLine {
+    param (
+        [Parameter(Mandatory = $True, Position = 1)]
+        [string]$line
+    )
+    
+    $check = $true
+    $i = 0
+    while ($check -eq $true -and $i -lt $line.Length) {
+        # Verificamos el anio
+        if ($i -lt 4) {
+            $check = CheckStringToNumber -number $line[$i];
+        }
+        
+        # Verificamos el mes
+        if ($i -gt 4 -and $i -lt 7) {
+            $check = CheckStringToNumber -number $line[$i];
+        }
+
+        # Verificamos el dia
+        if ($i -gt 7 -and $i -lt 10) {
+            $check = CheckStringToNumber -number $line[$i];
+        }
+
+        # Verificamos la hora
+        if ($i -gt 10 -and $i -lt 13) {
+            $check = CheckStringToNumber -number $line[$i];
+        }
+
+        # Verificamos los minutos
+        if ($i -gt 13 -and $i -lt 16) {
+            $check = CheckStringToNumber -number $line[$i];
+        }
+
+        # Verificamos los segundos
+        if ($i -gt 16 -and $i -lt 19) {
+            $check = CheckStringToNumber -number $line[$i];
+        }
+
+        # Chequeamos los '-'
+        if ($i -eq 4 -or $i -eq 7 -or $i -eq 19) {
+            if ($line[$i] -ne '-') {
+                $check = $false;
+            }
+        }
+
+        # Chequeamos los ':'
+        if ($i -eq 13 -or $i -eq 16) {
+            if ($line[$i] -ne ':') {
+                $check = $false;
+            }
+        }
+
+        # Chequeamos los ' '
+        if ($i -eq 10 -and $line[$i] -ne ' ') {
+            $check = $false;
+        }
+
+        $i++;
+    }
+
+    return $check;
+}
+
+foreach ($f in $files) {
     # Ordenamos el archivo
 
     Sort-Object { [string]$_.split()[0] }
 
-    foreach($line in Get-Content $f)
-    {
-        $dia = $line.SubString(0,10)
-        $usuario = $line.SubString(20)
+    foreach ($line in Get-Content $f) {
+        # Verificamos que la fecha este en el formato correcto (YYYY-MM-DD)
+        $check = CheckLine -line $line
 
-        if ("$diaActual" -ne "$dia")
-        {
-            $diaActual = $dia
-            $cantidadDias++
-        }
+        if ($check -eq $True) {
+            $dia = $line.SubString(0, 10)
+            $usuario = $line.SubString(20)
 
-        if ($mapEpochs[$usuario])
-        {
-            # Finaliza una llamada de este usuario ($usuario)
+            if ("$diaActual" -ne "$dia") {
+                $diaActual = $dia
+                $cantidadDias++
+            }
+
+            if ($mapEpochs[$usuario]) {
+                # Finaliza una llamada de este usuario ($usuario)
             
-            # Obtenemos la fecha desde el archivo de texto
-            $fechaFin=$line.Substring(0,19)
+                # Obtenemos la fecha desde el archivo de texto
+                $fechaFin = $line.Substring(0, 19)
 
-            # Convertir la fecha a epoch
-            $epochFin=(New-TimeSpan -Start $timestampInit -End $fechaFin).TotalSeconds
+                # Convertir la fecha a epoch
+                $epochFin = (New-TimeSpan -Start $timestampInit -End $fechaFin).TotalSeconds
             
-            # Obtener la diferencia entre epochs
-            $difEpochs = $epochFin - $mapEpochs[$usuario]
+                # Obtener la diferencia entre epochs
+                $difEpochs = $epochFin - $mapEpochs[$usuario]
 
-            # Obtenemos el dia de inicio de la llamada (de timestamp a fecha)
-            $diaInicioLargo = $diaInicioLlamada[$usuario]
-            $diaInicio = $diaInicioLargo.Substring(0, 10)
+                # Obtenemos el dia de inicio de la llamada (de timestamp a fecha)
+                $diaInicioLargo = $diaInicioLlamada[$usuario]
+                $diaInicio = $diaInicioLargo.Substring(0, 10)
 
-            # Sumamos el tiempo de llamada por usuario en el dia que se inicio la llamada
-            $tiempoDeLlamadaPorDiaPorUsuario["$diaInicio $usuario"] += $difEpochs
+                # Sumamos el tiempo de llamada por usuario en el dia que se inicio la llamada
+                $tiempoDeLlamadaPorDiaPorUsuario["$diaInicio $usuario"] += $difEpochs
 
-            # Aumentamos el tiempo de llamada por usuario en la semana
-            $tiempoDeLLamadaPorUsuarioSemanal[$usuario]+=$difEpochs
+                # Aumentamos el tiempo de llamada por usuario en la semana
+                $tiempoDeLLamadaPorUsuarioSemanal[$usuario] += $difEpochs
 
-            # Aumentamos los tiempos de llamada por dia
-            $tiempoDeLlamadaPorDia[$diaInicio] += $difEpochs
+                # Aumentamos los tiempos de llamada por dia
+                $tiempoDeLlamadaPorDia[$diaInicio] += $difEpochs
 
-            # Aumentamos los tiempos de llamada semanal
-            $tiempoDeLlamadaSemanal+=$difEpochs
+                # Aumentamos los tiempos de llamada semanal
+                $tiempoDeLlamadaSemanal += $difEpochs
 
-            # Volvemos a colocar el map del usuario en vacio
-            $mapEpochs["$usuario"]=$null
+                # Volvemos a colocar el map del usuario en vacio
+                $mapEpochs["$usuario"] = $null
 
+            }
+            else {
+            
+                # Comienza una llamada nueva de este usuario ($usuario)
+                $cantidadLlamadasPorUsuario[$usuario] += 1
+
+                # Aumentamos la cantidad de llamadas en ese dia
+                $cantidadLlamadasPorDia[$dia] += 1
+
+                # Aumentamos la cantidad de llamadas semanales
+                $cantidadLlamadasSemanal += 1
+
+                # Sumamos la cantidad de llamadas realizadas por el usuario en el dia
+                $cantidadLlamadasPorDiaPorUsuario["$dia $usuario"] += 1
+
+                # Obtenemos la fecha desde el archivo de texto
+                $fechaInicio = $line.SubString(0, 19)
+
+                # Convertimos la fecha a epoch
+                $epochInicio = (New-TimeSpan -Start $timestampInit -End $fechaInicio).TotalSeconds
+
+                # Seteamos el dia inicio de la llamada
+                $diaInicioLlamada[$usuario] = $fechaInicio
+
+                # Actualizamos el map de este usuario
+                $mapEpochs[$usuario] = $epochInicio
+
+            }
         }
         else {
-            
-            # Comienza una llamada nueva de este usuario ($usuario)
-            $cantidadLlamadasPorUsuario[$usuario]+=1
-
-            # Aumentamos la cantidad de llamadas en ese dia
-            $cantidadLlamadasPorDia[$dia]+=1
-
-            # Aumentamos la cantidad de llamadas semanales
-            $cantidadLlamadasSemanal+=1
-
-            # Sumamos la cantidad de llamadas realizadas por el usuario en el dia
-            $cantidadLlamadasPorDiaPorUsuario["$dia $usuario"]+=1
-
-            # Obtenemos la fecha desde el archivo de texto
-            $fechaInicio = $line.SubString(0,19)
-
-            # Convertimos la fecha a epoch
-            $epochInicio = (New-TimeSpan -Start $timestampInit -End $fechaInicio).TotalSeconds
-
-            # Seteamos el dia inicio de la llamada
-            $diaInicioLlamada[$usuario] = $fechaInicio
-
-            # Actualizamos el map de este usuario
-            $mapEpochs[$usuario]=$epochInicio
-
+            $erroresDescripcion += [PSCustomObject]@{
+                Numero = $erroresCantidad;
+                Registro = $line
+            };
+            $erroresCantidad++;
         }
-
     }
 
 }
-
-# foreach ($i in $mapEpochs.GetEnumerator())
-# {
-#     Write-Output "Name ($($i.Name)) => Value ($($i.Value))"
-# }
-
-
 
 # # Mostramos Punto 1
 Write-Output "Punto 1. Promedio de tiempo de las llamadas realizadas por dia."
 Write-Output ""
 
-foreach ($i in $tiempoDeLlamadaPorDia.GetEnumerator())
-{
+$tiempoDeLlamadaPorDiaFORMATEADO = @{}
+
+foreach ($i in $tiempoDeLlamadaPorDia.GetEnumerator()) {
     $promedio = [int]($($i.Value) / $cantidadLlamadasPorDia[$i.Name])
 
     # Obtenemos la media de tiempo por dia (Sirve para el Punto 4 y 5)
@@ -181,155 +261,158 @@ foreach ($i in $tiempoDeLlamadaPorDia.GetEnumerator())
     $ts = [timespan]::fromseconds($promedio)
     $promedioFormateado = ("{0:hh\:mm\:ss}" -f $ts)
 
-    Write-Output "Promedio el $($i.Name) : $promedioFormateado"
+    $tiempoDeLlamadaPorDiaFORMATEADO[$i.Name] = $promedioFormateado
 
-    Write-Output "----------------------------------"
 }
 
-Write-Output ""
+$tiempoDeLlamadaPorDiaFORMATEADO | Format-Table
 
+Write-Output ""
 
 # # # Mostramos Punto 2
 Write-Output "Punto 2. Promedio de tiempo y cantidad por usuario por dia."
 Write-Output ""
 
-foreach ($i in $tiempoDeLlamadaPorDiaPorUsuario.GetEnumerator())
-{
-    $dia = $i.Name.ToString().Substring(0,10)
+$punto2Formatedo = @()
+
+foreach ($i in $tiempoDeLlamadaPorDiaPorUsuario.GetEnumerator()) {
+    $dia = $i.Name.ToString().Substring(0, 10)
     $usuario = $i.Name.ToString().Substring(11)
-    
-    Write-Output "Dia: $dia | Usuario: $usuario"
 
     $promedio = [int] ($i.Value / $cantidadLlamadasPorDiaPorUsuario[$i.Name])
     
     $ts = [timespan]::fromseconds($promedio)
     $promedioFormateado = ("{0:hh\:mm\:ss}" -f $ts)
 
-    Write-Output "Promedio de tiempo: $promedioFormateado"
-    Write-Output "Cantidad de Llamadas: ${cantidadLlamadasPorDiaPorUsuario[$i]}"
-
-    Write-Output "----------------------------------"
+    $punto2Formatedo += [PSCustomObject]@{
+        Dia      = $dia;
+        Usuario  = $usuario;
+        Tiempo   = $promedioFormateado;
+        Llamadas = $cantidadLlamadasPorDiaPorUsuario[$i.Name]
+    }
 }
-Write-Output ""
 
+$punto2Formatedo | Format-Table
+
+Write-Output ""
 
 # # Mostramos Punto 3
 Write-Output "Punto 3. Los 3 usuarios con mas llamadas en la semana."
 Write-Output ""
 
-$primerLugar=""
-$segundoLugar=""
-$tercerLugar=""
+$primerLugar = ""
+$segundoLugar = ""
+$tercerLugar = ""
 
-foreach ($i in $cantidadLlamadasPorUsuario.GetEnumerator())
-{
-    if ($primerLugar -eq "")
-    {
+$top = @()
+
+foreach ($i in $cantidadLlamadasPorUsuario.GetEnumerator()) {
+    if ($primerLugar -eq "") {
         $primerLugar = $i.Name
     }
-    elseif ($segundoLugar -eq "")
-    {
+    elseif ($segundoLugar -eq "") {
         $segundoLugar = $i.Name
     }
-    elseif ($tercerLugar -eq "")
-    {
+    elseif ($tercerLugar -eq "") {
         $tercerLugar = $i.Name
     }
-    elseif ($i.Value -gt $cantidadLlamadasPorUsuario[$primerLugar])
-    {
+    elseif ($i.Value -gt $cantidadLlamadasPorUsuario[$primerLugar]) {
         # Cambiamos el tercer lugar
-        $tercerLugar=$segundoLugar
+        $tercerLugar = $segundoLugar
         
         # Cambiamos el segundo lugar
-        $segundoLugar=$primerLugar
+        $segundoLugar = $primerLugar
         
         # Cambiamos el primer lugar
-        $primerLugar=$i.Name
+        $primerLugar = $i.Name
     }
-    elseif ($i.Value -gt $cantidadLlamadasPorUsuario[$segundoLugar])
-    {
+    elseif ($i.Value -gt $cantidadLlamadasPorUsuario[$segundoLugar]) {
         # Cambiamos el tercer lugar
-        $tercerLugar=$segundoLugar
+        $tercerLugar = $segundoLugar
 
         # Cambiamos el segundo lugar
-        $segundoLugar=$i.Name
+        $segundoLugar = $i.Name
     }
-    elseif ($i.Value -gt $cantidadLlamadasPorUsuario[$tercerLugar])
-    {
+    elseif ($i.Value -gt $cantidadLlamadasPorUsuario[$tercerLugar]) {
         # Cambiamos el tercer lugar
-        $tercerLugar=$i
+        $tercerLugar = $i
     }
 }
 
-Write-Output "TOP 1 => $primerLugar con $($cantidadLlamadasPorUsuario[$primerLugar]) llamadas en la semana"
-
-if ($segundoLugar -eq "")
-{
-    Write-Output "No existe TOP 2."
-}
-else
-{
-    Write-Output "TOP 2 => $segundoLugar con $($cantidadLlamadasPorUsuario[$segundoLugar]) llamadas en la semana"
+$top += [PSCustomObject]@{
+    TOP      = 1;
+    Usuario  = $primerLugar;
+    Llamadas = $cantidadLlamadasPorUsuario[$primerLugar]
 }
 
-if ($tercerLugar -eq "")
-{
-    Write-Output "No existe TOP 3."
-}
-else 
-{
-    Write-Output "TOP 3 => $tercerLugar con $($cantidadLlamadasPorUsuario[$tercerLugar]) llamadas en la semana"
+if ($segundoLugar -ne "") {
+    $top += [PSCustomObject]@{
+        TOP      = 2;
+        Usuario  = $segundoLugar;
+        Llamadas = $cantidadLlamadasPorUsuario[$segundoLugar]
+    }
 }
 
+if ($tercerLugar -ne "") {
+    $top += [PSCustomObject]@{
+        TOP      = 3;
+        Usuario  = $tercerLugar;
+        Llamadas = $cantidadLlamadasPorUsuario[$tercerLugar]
+    }
+}
+
+$top | Format-Table
 
 Write-Output ""
 
-foreach ($f in $files)
-{
+foreach ($f in $files) {
     # Ordenar Archivo en variable
 
-    foreach ($line in Get-Content $f)
-    {
-        $dia = $line.SubString(0,10)
-        $usuario = $line.SubString(20)
+    foreach ($line in Get-Content $f) {
+        # Verificamos que la fecha este en el formato correcto (YYYY-MM-DD)
+        $check = CheckLine -line $line
 
-        if ($mapEpochs[$usuario])
-        {
-            # Finaliza una llamada de este usuario ($usuario)
+        if ($check -eq $True) {
+            $dia = $line.SubString(0, 10)
+            $usuario = $line.SubString(20)
+
+            if ($mapEpochs[$usuario]) {
+                # Finaliza una llamada de este usuario ($usuario)
             
-            # Obtenemos la fecha desde el archivo de texto
-            $fechaFin=$line.Substring(0,19)
+                # Obtenemos la fecha desde el archivo de texto
+                $fechaFin = $line.Substring(0, 19)
 
-            # Convertir la fecha a epoch
-            $epochFin=(New-TimeSpan -Start $timestampInit -End $fechaFin).TotalSeconds
+                # Convertir la fecha a epoch
+                $epochFin = (New-TimeSpan -Start $timestampInit -End $fechaFin).TotalSeconds
             
-            # Obtener la diferencia entre epochs
-            $difEpochs = $epochFin - $mapEpochs[$usuario]
+                # Obtener la diferencia entre epochs
+                $difEpochs = $epochFin - $mapEpochs[$usuario]
 
-            # Obtenemos el dia de inicio de la llamada (de timestamp a fecha)
-            $diaInicioLargo = $diaInicioLlamada[$usuario]
-            $diaInicio = $diaInicioLargo.Substring(0, 10)
+                # Obtenemos el dia de inicio de la llamada (de timestamp a fecha)
+                $diaInicioLargo = $diaInicioLlamada[$usuario]
+                $diaInicio = $diaInicioLargo.Substring(0, 10)
 
-            # Nos fijamos si tenemos que incrementar la cantidad de llamadas que no superan la media diaria
-            if ($difEpochs -lt $mediaDeTiempoPorDia[$diaInicio])
-            {
-                $cantidadLlamadasNoSuperanMediaDiaria[$diaInicio]++
+                # Nos fijamos si tenemos que incrementar la cantidad de llamadas que no superan la media diaria
+                if ($difEpochs -lt $mediaDeTiempoPorDia[$diaInicio]) {
+                    $cantidadLlamadasNoSuperanMediaDiaria[$diaInicio]++
+                }
+
+                # Volvemos a colocar el map del usuario en vacio
+                $mapEpochs["$usuario"] = $null
             }
+            else {
+                # Obtenemos la fecha desde el archivo de texto
+                $fechaInicio = $line.SubString(0, 19)
 
-            # Volvemos a colocar el map del usuario en vacio
-            $mapEpochs["$usuario"]=$null
+                # Convertimos la fecha a epoch
+                $epochInicio = (New-TimeSpan -Start $timestampInit -End $fechaInicio).TotalSeconds
+
+                # Actualizamos el map de este usuario
+                $mapEpochs[$usuario] = $epochInicio
+            }
         }
-        else 
-        {
-            # Obtenemos la fecha desde el archivo de texto
-            $fechaInicio = $line.SubString(0,19)
 
-            # Convertimos la fecha a epoch
-            $epochInicio = (New-TimeSpan -Start $timestampInit -End $fechaInicio).TotalSeconds
-
-            # Actualizamos el map de este usuario
-            $mapEpochs[$usuario]=$epochInicio
-        }
+        
     }
 }
 
@@ -337,11 +420,7 @@ foreach ($f in $files)
 Write-Output "Punto 4. Cuantas llamadas no superan la media de tiempo por dia"
 Write-Output ""
 
-foreach ($i in $cantidadLlamadasNoSuperanMediaDiaria.GetEnumerator())
-{
-    Write-Output "Dia: $($i.Name) => $($cantidadLlamadasNoSuperanMediaDiaria[$i.Name]) llamadas que no superan la media de ese dia."
-}
-
+$cantidadLlamadasNoSuperanMediaDiaria | Format-Table
 
 Write-Output ""
 
@@ -349,14 +428,12 @@ Write-Output ""
 Write-Output "Punto 5. El usuario que tiene mas cantidad de llamadas por debajo de la media en la semana"
 Write-Output ""
 
-$maximo="0"
-$usuario=""
-$promedioCantidadLLamadasSemanal= [int] ($cantidadLlamadasSemanal / $cantidadDias)
+$maximo = "0"
+$usuario = ""
+$promedioCantidadLLamadasSemanal = [int] ($cantidadLlamadasSemanal / $cantidadDias)
 
-foreach ($i in $cantidadLlamadasPorUsuario.GetEnumerator())
-{
-    if ($i.Value -le $promedioCantidadLLamadasSemanal -and $i.Value -gt $maximo)
-    {
+foreach ($i in $cantidadLlamadasPorUsuario.GetEnumerator()) {
+    if ($i.Value -le $promedioCantidadLLamadasSemanal -and $i.Value -gt $maximo) {
         $maximo = $i.Value
         $usuario = $i.Name
     }
@@ -365,3 +442,9 @@ foreach ($i in $cantidadLlamadasPorUsuario.GetEnumerator())
 Write-Output "$usuario con $maximo llamadas en la semana"
 
 Write-Output ""
+
+# Errores
+
+Write-Output "ERRORES ENCONTRADOS: $erroresCantidad"
+
+$erroresDescripcion | Format-Table
