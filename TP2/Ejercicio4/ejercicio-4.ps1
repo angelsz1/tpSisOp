@@ -6,7 +6,11 @@
 #Mottura, Agostina Micaela (DNI: 41898101)
 #Povoli Olivera, Victor (DNI: 43103780)
 #Szust, Ángel Elías (DNI: 43098495)
+
 <#
+.SYNOPSIS
+Cuenta lineas de codigo y lineas de comentarios de un codigo
+
 .DESCRIPTION
 Este script cuenta la cantidad de lineas de codigo y de comentarios que poseen 
 los archivos en una ruta pasada por parametro controlando solo los archivos con cierta extension
@@ -120,9 +124,16 @@ foreach($line in $archivo) {
     }
 }
 
-$total=$comentarios+$codigos
-$porcentajeComentario=$comentarios*100/$total
-$porcentajeCodigo=$codigos*100/$total
+if( $archivo.count -ne 0 )
+{   
+    $total=$comentarios+$codigos
+    $porcentajeComentario=$comentarios*100/$total
+    $porcentajeCodigo=$codigos*100/$total
+}
+else {
+    $porcentajeComentario=0
+    $porcentajeCodigo=0
+}
 "|{0,-11}|{1,9}|{2,11}|" -f "", "Cantidad", "Porcentaje"
 "|{0,-11}|{1,9}|{2,10:n2}%|" -f "Comentarios", $comentarios, $porcentajeComentario
 "|{0,-11}|{1,9}|{2,10:n2}%|" -f "Codigo", $codigos, $porcentajeCodigo
