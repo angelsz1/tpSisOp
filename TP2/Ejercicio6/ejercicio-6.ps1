@@ -1,12 +1,16 @@
 #APL N. 2
-#SCRIPT 6
+#SCRIPT 1
 #INTEGRANTES:
 #Carballo, Facundo Nicolas (DNI: 42774931)
 #Garcia Burgio, Matias Nicolas (DNI: 42649117)
 #Mottura, Agostina Micaela (DNI: 41898101)
 #Povoli Olivera, Victor (DNI: 43103780)
 #Szust, Ángel Elías (DNI: 43098495)
+
 <#
+.SYNOPSIS
+Simulacion de una papelera de reciclaje.
+
 .DESCRIPTION
 Este script emula el comportamiento de una papelera de reciclaje.
 Acciones : (solo se puede utilizar una en cada ejecucion)
