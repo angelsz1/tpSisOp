@@ -49,21 +49,16 @@ Param(
         }
         return $true
     })] [Parameter(Mandatory = $True,Position = 1)] [System.IO.FileInfo]$path,
-
-    [Parameter(Mandatory=$True,Position=2)]
-    [switch] $acciones,
-    [Parameter(Mandatory=$true,Position=3)]
+    [Parameter(Mandatory=$true,Position=2)]
     [ValidateSet("listar","peso","compilar","publicar")]
-    [string[]] $actions,
-    [Parameter(Mandatory=$False,Position=4)]
-    [switch] $salida,
+    [string[]] $acciones,
     [Parameter(Mandatory=$false,Position=5)]
-    [System.IO.FileInfo] $output
+    [System.IO.FileInfo] $salida
 
   )
 
-$global:accion = $actions
-$global:output = $output
+$global:accion = $acciones
+$global:output = $salida
 
 if ($accion.Contains("publicar") -eq $True -and $accion.Contains("compilar") -eq $False) {
     Write-Error "No se puede publicar sin compilar primero"
