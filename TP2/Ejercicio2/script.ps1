@@ -31,8 +31,8 @@ Este script analiza registros de llamadas telefonicas y muestra en pantalla la s
 
 # Verificamos la cantidad de parametros
 Param(
-    [Parameter(Mandatory = $True, Position = 1)]
-    [switch]$logs,
+    # [Parameter(Mandatory = $True, Position = 1)]
+    # [switch]$logs,
     [Parameter(Mandatory = $True, Position = 2)]
     [validateScript({
             if (-Not ($_ | Test-Path -PathType container)) {
@@ -40,7 +40,7 @@ Param(
             }
             return $true
         })]
-    [string]$path
+    [string]$logs
 )
 
 # Declaracion de variables a utilizar
@@ -75,7 +75,7 @@ $erroresDescripcion = @()
 
 $diaActual = ""
 
-$files = Get-ChildItem "$path"
+$files = Get-ChildItem "$logs"
 
 function CheckStringToNumber {
     param (
