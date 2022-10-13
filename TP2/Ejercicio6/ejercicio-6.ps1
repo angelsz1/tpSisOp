@@ -242,7 +242,13 @@ function recuperar() {
                 $parent = Split-Path -Parent $parent
             }
 
-            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destino)
+            if($entry.Name -ne "") {
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destino)
+            } else {
+                if (-Not(Test-Path -LiteralPath $destino)) {
+                    New-Item -Path $destino -Type Directory | Out-Null
+                }
+            }
             $entry.Delete()
         }
         Rename-Item -Path "$($registroARecuperar.Path)/$($registroARecuperar.RemovedFileName)" -NewName $registroARecuperar.FileName
