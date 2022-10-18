@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1665951056 source:d:\documentos\facultad\sistemas-operativos\tp1sisop\tp3\ejercicio4\main.c
+	<stdio.h>
+	<stdlib.h>
+	<unistd.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<string.h>
+
