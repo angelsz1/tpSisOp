@@ -35,18 +35,22 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 > script.log
-logPath="$HOME/papelera.zip/logPapeleraAMAVF.txt" #iniciales del grupo, para chequear que sea mi papelera
-papeleraPath="$HOME/papelera.zip"
+papeleraZip="/home/`whoami`/papeleraAMAVF.zip"
+papeleraPath="/home/`whoami`/papeleraAMAVF"
+logPath="/home/`whoami`/papeleraAMAVF/logPapeleraAMAVF.txt" #iniciales del grupo, para chequear que sea mi papelera
 #funciones para cada opcion
 
 
 listar(){ #listo
-    var=`cat $logPath | awk 'BEGIN{FS="  ";OFS=" "} {print $1,$2}'`
+    var=`cat $logPath | awk 'BEGIN{FS="  ";OFS=" "} {printf  "%-14s|  %s\n" ,$1,$2}'`
     if [[ $var = "" ]]; then
         echo "La papelera esta vacia"
     else
         echo "Contenido de la papelera: "
-        cat $logPath | awk 'BEGIN{FS="  ";OFS=" "} {print $1,$2}'
+        echo "Nombre        |  Direccion de Origen"
+        echo "-----------------------------------------"
+        echo "$var"
+        #cat $logPath | awk 'BEGIN{FS="  ";OFS=" "} {print $1,$2}'
     fi
 
 }
@@ -76,7 +80,7 @@ recuperar(){ #listo
         if [[ -f $papeleraPath/"$1" ]]; then
             cp $papeleraPath/"$1" "`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`"
             rm $papeleraPath/"$1" 
-        #si es un dir
+        #si es un dir"
         elif [[ -d $papeleraPath/"$1" ]]; then 
             cp -r $papeleraPath/"$1" "`grep -w "$1" < $logPath | awk -v var=$archNum 'BEGIN{FS="  ";OFS=" "}{if(NR == var) print $2}'`" 
             rm -r $papeleraPath/"$1" 
@@ -88,6 +92,7 @@ recuperar(){ #listo
     elif [[ `cat $logPath | grep -w "$1" | awk 'END{print NR}'` -eq 1 ]]; then
         nuevoNombre="`grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'`" #consigo el nuevo nombre del archivo dentro de la papelera
         mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" #le cambio el nombre al original
+        IDarch=`grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $3}'`
 
         #si es un file
         if [[ -f $papeleraPath/"$1" ]]; then
@@ -99,10 +104,10 @@ recuperar(){ #listo
             rm -r $papeleraPath/"$1"
         fi
 
-        sed -i "/$1/d" $logPath    #borro la linea del log
+        sed -i "/$IDarch/d" $logPath    #borro la linea del log
     else
         echo "El archivo $1 no se encuentra en la papelera de reciclaje"
-        exit 1;
+        return 1
     fi
 }
 
@@ -147,6 +152,7 @@ borrar(){
     elif [[ `cat $logPath | grep -w "$1" | awk 'END{print NR}'` -eq 1 ]]; then
         nuevoNombre=`cat $logPath | grep -w "$1" | awk 'BEGIN{FS="  ";OFS=" "}{printf "%s|%d" , $1, $3}'` 
         mv $papeleraPath/"$nuevoNombre" $papeleraPath/"$1" 
+        IDarch=`grep -w "$1" < $logPath | awk 'BEGIN{FS="  ";OFS=" "}{print $3}'`
 
         #si es un file
         if [[ -f $papeleraPath/"$1" ]]; then
@@ -156,22 +162,44 @@ borrar(){
             rm -r $papeleraPath/"$1" 
         fi
 
-        sed -i "/$1/d" $logPath    #borro la linea del log
+        sed -i "/$IDarch/d" $logPath    #borro la linea del log
     else
         echo "El archivo $1 no se encuentra en la papelera de reciclaje"
-        exit 1;
+        return 1
     fi
 }
 
+zipHandler(){
+    if [[ -f $papeleraZip ]]; then
+        rm $papeleraZip
+    fi
+    #sleep 5
+    cd $papeleraPath
+
+    zip -r -0 $papeleraZip * >> /dev/null
+
+    rm -r $papeleraPath
+
+}
+
+if [[ -d $papeleraZip ]]; then
+    rm -r $papeleraZip
+fi
+
+if [[ -d $papeleraPath ]]; then
+    rm -r $papeleraPath
+fi
 
 #si no existe la papelera, la creo
-if [[ -d $papeleraPath || -f $papeleraPath ]]
+if [[ -f $papeleraZip ]]
 then
+    unzip $papeleraZip -d $papeleraPath >> /dev/null
     if [[ -f $logPath ]]; then
         echo "La papelera ya existe" >> script.log
     else
         echo "La papelera existente no fue creada con este script"
         rm -r $papeleraPath
+
         mkdir $papeleraPath
     fi
 else
@@ -192,6 +220,7 @@ fi
 
 if ! [[ $1 = "--listar" || $1 = "--vaciar" || $1 = "--recuperar" || $1 = "--eliminar" || $1 = "--borrar" ]]; then
     echo "Opcion invalida" >> script.log
+    zipHandler
     exit 1
 fi
 
@@ -208,10 +237,17 @@ elif [[ $1 = "--vaciar" ]]; then #sin params
 elif [[ $1 = "--recuperar" ]]; then #param: archivo
     if [[ $ruta != "" ]]; then
         recuperar "$ruta"
-        echo "El archivo $ruta se ha recuperado" 
+        if [[ $? -eq 0 ]]; then
+            echo "El archivo $ruta se ha recuperado" 
+        else
+            zipHandler
+            exit 1
+        fi
+        
     else
         echo "Debe proporcionar un archivo/directorio a recuperar"
         echo "Para mas informacion, ejecute el script con la opcion -h"
+        zipHandler
         exit 1;
     fi
 elif [[ $1 = "--eliminar" ]]; then #param: archivo
@@ -221,19 +257,30 @@ elif [[ $1 = "--eliminar" ]]; then #param: archivo
     elif [[ $ruta = "" ]]; then
         echo "Debe proporcionar un archivo/directorio a eliminar"
         echo "Para mas informacion, ejecute el script con la opcion -h"
+        zipHandler
         exit 1;
     else
         echo "$ruta no es un parametro valido"
         echo "Para mas informacion, ejecute el script con la opcion -h"
+        zipHandler
         exit 1;
     fi
 elif [[ $1 = "--borrar" ]]; then #param: archivo
     if [[ $ruta != "" ]]; then
         borrar $ruta
-        echo "El archivo $ruta se ha borrado de la papelera de reciclaje"
+        if [[ $? -eq 0 ]]; then
+            echo "El archivo $ruta se ha borrado de la papelera de reciclaje" 
+        else
+            zipHandler
+            exit 1;
+        fi
+
     else
         echo "Debe proporcionar un archivo/directorio a borrar"
         echo "Para mas informacion, ejecute el script con la opcion -h"
+        zipHandler
         exit 1;
     fi
 fi
+
+zipHandler
