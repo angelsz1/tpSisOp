@@ -22,7 +22,7 @@ void *getFromList(List *l, unsigned i){
     return aux->dato;
 }
 
-void *getByContent(List *l, void *d, unsigned t, boolean (*cmp)(void*, void*)){
+void *getByContent(List *l, void *d, unsigned t, int (*cmp)(void*, void*)){
     tNodo *aux = *l;
     while(aux != NULL){
         if(cmp(aux->dato, d)){
@@ -33,14 +33,9 @@ void *getByContent(List *l, void *d, unsigned t, boolean (*cmp)(void*, void*)){
     return NULL;
 }
 
-boolean cmp(void *a, void *b){
-    tHilo *h1 = (tHilo*)a;
-    tHilo *h2 = (tHilo*)b;
-    printf("Comparando %s con %s\n", h1->path, h2->path);
-    return strcmp(h1->path, h2->path) == 0;
-}
 
-void *removeByContent(List *l, void *d, unsigned t, boolean (*cmp)(void*, void*)){
+
+void *removeByContent(List *l, void *d, unsigned t, int (*cmp)(void*, void*)){
     tNodo *aux = *l;
     tNodo *prev = NULL;
     while(aux != NULL){
@@ -70,10 +65,7 @@ void toString(List *l, void (*print)(void*)){
     }
 }
 
-void print(void *a){
-    tHilo *h = (tHilo*)a;
-    printf("%s\t%d\n", h->path, *(int*)(h->hilo));
-}
+
 
 void *removeFromList(List *l, unsigned i){
     tNodo *aux = *l;
@@ -128,5 +120,16 @@ void empty(List *l){
 void destroy(List *l){
     empty(l);
 }
+
+int getSize(List *l){
+    tNodo *aux = *l;
+    int i = 0;
+    while(aux != NULL){
+        i++;
+        aux = aux->sig;
+    }
+    return i;
+}
+
 
 // Path: Lista/lista.h
