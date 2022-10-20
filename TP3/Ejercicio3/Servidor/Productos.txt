@@ -1,0 +1,5 @@
+ID;DESCRIPCION;PRECIO;COSTO;STOCK;
+1;Harina Blancaflor;70;40;0;
+2;Yerba Mate Cruz de Malta;180;120;100;
+3;Cafe La Morenita;140;100;53;
+4;Te La Virginia;60;30;0;
