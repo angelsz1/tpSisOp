@@ -1,0 +1,4 @@
+The directory /home/angelszust/go/olis was created.
+The directory /home/angelszust/go/olis was deleted.
+path de aca = /home/angelszust/go/olisThe directory /home/angelszust/go/otroFolder was deleted.
+path de aca = /home/angelszust/go/otroFolder

@@ -23,16 +23,8 @@ typedef struct{
     pthread_t* hilo;
 }tHilo;
 
-typedef struct{
-    char* path;
-    List* lista;
-}tArgs;
-
 
 void *monitor(void* arg);
 void *mainThread(void* arg);
-void print(void *a);
-int cmp(void *a, void *b);
-int contains (char* str, char* token);
 
 #endif /* header_h */
