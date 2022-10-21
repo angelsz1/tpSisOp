@@ -15,21 +15,30 @@ int main()
 
     char* areaCompartida = (char*)shmat(shmid,NULL,0);
 
+    //Crear semaforo para esperar consultas
+    //Crear semaforo para area compartida
     while (1) {
+        //P semaforo consultas
+        //P area compartida
         if (strcmp(areaCompartida, "Alta") == 0) {
             printf("Hacemos alta\n");
             areaCompartida = "";
         };
+        //V area compartida
 
+        //P area compartida
         if (strcmp(areaCompartida, "Baja") == 0) {
             printf("Hacemos baja\n");
             areaCompartida = "";
         };
-
+        //V area compartida
+        
+        //P area compartida
         if (strcmp(areaCompartida, "Consulta") == 0) {
             printf("Hacemos consulta\n");
             areaCompartida = "";
         };
+        //V area compartida
     }
     
     return 0;
