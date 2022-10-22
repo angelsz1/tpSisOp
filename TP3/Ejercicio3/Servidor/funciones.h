@@ -13,6 +13,9 @@
 
 #include <signal.h>
 
+#include <pwd.h>
+#include <errno.h>
+
 typedef struct Producto
 {
     int id;
@@ -22,14 +25,12 @@ typedef struct Producto
     int stock;
 } Producto;
 
-int mostrarStockProducto(int id, char* textoServidor, char* path);
+int mostrarStockProducto(int id, char *textoServidor, char *path);
 
-int mostrarProductosSinStock(char* textoServidor, char* path);
+int mostrarProductosSinStock(char *textoServidor, char *path);
 
-int mostrarCostoReposicion(int cantidadAReponer, char* textoServidor, char* path);
+int mostrarCostoReposicion(int cantidadAReponer, char *textoServidor, char *path);
 
-int mostrarListaProductos(char* textoServidor, char* path);
-
-void nada();
+int mostrarListaProductos(char *textoServidor, char *path);
 
 #endif // FUNCIONES_H_INCLUDED

@@ -1,6 +1,6 @@
 #include "funciones.h"
 
-int mostrarStockProducto(int id, char* textoServidor, char* path)
+int mostrarStockProducto(int id, char *textoServidor, char *path)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL)
@@ -9,11 +9,11 @@ int mostrarStockProducto(int id, char* textoServidor, char* path)
         return 1;
     }
 
-    char line[100];
+    char line[1000];
     Producto producto;
 
     rewind(file);
-    fgets(line, 100, file);
+    fgets(line, 1000, file);
 
     while (fscanf(file, "%d;%[^;];%d;%d;%d;\n", &producto.id, producto.descripcion, &producto.precio, &producto.costo,
                   &producto.stock) != EOF)
@@ -22,7 +22,7 @@ int mostrarStockProducto(int id, char* textoServidor, char* path)
         {
             sprintf(line, "%s %du\n", producto.descripcion, producto.stock);
             strcat(textoServidor, line);
-            //printf("%s %du\n", producto.descripcion, producto.stock);
+            // printf("%s %du\n", producto.descripcion, producto.stock);
             break;
         }
     }
@@ -30,7 +30,7 @@ int mostrarStockProducto(int id, char* textoServidor, char* path)
     fclose(file);
 }
 
-int mostrarProductosSinStock(char* textoServidor, char* path)
+int mostrarProductosSinStock(char *textoServidor, char *path)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL)
@@ -39,11 +39,11 @@ int mostrarProductosSinStock(char* textoServidor, char* path)
         return 1;
     }
 
-    char line[100];
+    char line[1000];
     Producto producto;
 
     rewind(file);
-    fgets(line, 100, file);
+    fgets(line, 1000, file);
 
     while (fscanf(file, "%d;%[^;];%d;%d;%d;\n", &producto.id, producto.descripcion, &producto.precio, &producto.costo,
                   &producto.stock) != EOF)
@@ -52,15 +52,14 @@ int mostrarProductosSinStock(char* textoServidor, char* path)
         {
             sprintf(line, "%d %s $%d\n", producto.id, producto.descripcion, producto.costo);
             strcat(textoServidor, line);
-            //printf("%d %s $%d\n", producto.id, producto.descripcion, producto.costo);
+            // printf("%d %s $%d\n", producto.id, producto.descripcion, producto.costo);
         }
     }
 
     fclose(file);
-
 }
 
-int mostrarCostoReposicion(int cantidadAReponer, char* textoServidor, char* path)
+int mostrarCostoReposicion(int cantidadAReponer, char *textoServidor, char *path)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL)
@@ -69,11 +68,11 @@ int mostrarCostoReposicion(int cantidadAReponer, char* textoServidor, char* path
         return 1;
     }
 
-    char line[100];
+    char line[1000];
     Producto producto;
 
     rewind(file);
-    fgets(line, 100, file);
+    fgets(line, 1000, file);
 
     int totalCosto = 0;
     while (fscanf(file, "%d;%[^;];%d;%d;%d;\n", &producto.id, producto.descripcion, &producto.precio, &producto.costo,
@@ -88,10 +87,9 @@ int mostrarCostoReposicion(int cantidadAReponer, char* textoServidor, char* path
     sprintf(textoServidor, "$%d\n", totalCosto);
 
     fclose(file);
-
 }
 
-int mostrarListaProductos(char* textoServidor, char* path)
+int mostrarListaProductos(char *textoServidor, char *path)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL)
@@ -100,24 +98,19 @@ int mostrarListaProductos(char* textoServidor, char* path)
         return 1;
     }
 
-    char line[100];
+    char line[1000];
     Producto producto;
 
     rewind(file);
-    fgets(line, 100, file);
+    fgets(line, 1000, file);
 
     while (fscanf(file, "%d;%[^;];%d;%d;%d;\n", &producto.id, producto.descripcion, &producto.precio, &producto.costo,
                   &producto.stock) != EOF)
     {
         sprintf(line, "%d %s $%d\n", producto.id, producto.descripcion, producto.costo);
         strcat(textoServidor, line);
-        //printf("%d %s $%d\n", producto.id, producto.descripcion, producto.precio);
+        // printf("%d %s $%d\n", producto.id, producto.descripcion, producto.precio);
     }
 
     fclose(file);
-}
-
-void nada()
-{
-
 }

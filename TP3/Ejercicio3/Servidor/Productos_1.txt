@@ -1,0 +1,5 @@
+ID;DESCRIPCION;PRECIO;COSTO;STOCK;
+1;Producto_1;11;10;1;
+2;Producto_2;11;20;2;
+3;Producto_3;11;30;53;
+4;Producto_4;11;40;4;
