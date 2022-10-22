@@ -2,6 +2,8 @@
 
 void *mainThread(void* arg){
     char* path = ((tArgs*)arg)->path;
+    if(path[strlen(path)-1] == '/')
+        *(path+strlen(path)-1) = '\0';
     DIR *dir;
     char* newPath;
     struct dirent *ent;
