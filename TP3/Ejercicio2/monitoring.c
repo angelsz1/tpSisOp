@@ -48,7 +48,7 @@ void *monitor(void* arg){
         if (fd < 0) {
             perror("inotify_init");
         }
-        wd = inotify_add_watch(fd, path, IN_CREATE | IN_DELETE | IN_MODIFY);
+        wd = inotify_add_watch(fd, path, IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO);
         length = read(fd, buffer, BUF_LEN);
         if (length < 0) {
             perror("read");
@@ -120,6 +120,51 @@ void *monitor(void* arg){
                         fprintf(file,"El archivo %s%s%s fue modificado.\n",path, "/", event->name);
                         fclose(file);
                     }
+                }
+                else if(event->mask & IN_MOVED_FROM){
+                    if (event->mask & IN_ISDIR) {
+                        FILE * file = fopen(LOG_FILE, "a");
+                        fprintf(file,"El directorio %s%s%s fue movido a ",path, "/", event->name);
+                        fclose(file);
+                        char* newPath = malloc(strlen(path) + strlen(event->name) + 2);
+                        strcpy(newPath, path);
+                        strcat(newPath, "/");
+                        strcat(newPath,event->name);
+                        tHilo* aux = malloc(sizeof(tHilo));
+                        aux->path = newPath;
+                        aux->hilo = NULL;
+                        tHilo* h = (tHilo*)getByContent(lista,aux, sizeof(tHilo), cmp);
+
+                        while (h != NULL){
+                            pthread_cancel(*(h->hilo));
+                            removeByContent(lista,aux, sizeof(tHilo), cmp);
+                            h = (tHilo*)getByContent(lista,aux, sizeof(tHilo), cmp);
+                        }
+                    }
+                    
+                }
+                else if(event->mask & IN_MOVED_TO){
+                    if (event->mask & IN_ISDIR) {
+                        FILE * file = fopen(LOG_FILE, "a");
+                        fprintf(file,"%s%s%s\n",path, "/", event->name);
+                        fclose(file);
+                        char* newPath = malloc(strlen(path) + strlen(event->name) + 2);
+                        strcpy(newPath, path);
+                        strcat(newPath, "/");
+                        strcat(newPath,event->name);
+                        pthread_t hilo;
+                        pthread_t* pHilo = malloc(sizeof(pthread_t));
+                        tArgs *args = malloc(sizeof(tArgs));
+                        args->path = newPath;
+                        args->lista = ((tArgs*)arg)->lista;
+                        pthread_create(&hilo, NULL, mainThread, args);
+                        *pHilo = hilo;
+                        tHilo* h = malloc(sizeof(tHilo));
+                        h->path = newPath;
+                        h->hilo = pHilo;
+                        add(lista, h, sizeof(tHilo));
+                    }
+                    
                 }
             }
             i += EVENT_SIZE + event->len;
