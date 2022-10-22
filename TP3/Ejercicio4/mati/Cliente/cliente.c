@@ -6,6 +6,11 @@
 #include <semaphore.h>
 #include <fcntl.h>
 
+typedef struct {
+    int numero1;
+    int numero2;
+} pedido;
+
 int main()
 {
     char* clave = "../refugio";
@@ -15,12 +20,13 @@ int main()
         printf("Hubo un error al intentar abrir el área compartida de memoria.");
         exit(1);
     }
-    char* areaCompartida = (char*)shmat(shmid,NULL,0);
+    pedido* areaCompartida = (pedido*)shmat(shmid,NULL,0);
 
     sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
 
     printf("Ecribi algo: ");
-    fgets(areaCompartida, 20, stdin);
+    scanf("%d", &(areaCompartida->numero1));
+    //fgets(areaCompartida->numero1, 20, stdin);
     
     sem_post(semComandos);
 

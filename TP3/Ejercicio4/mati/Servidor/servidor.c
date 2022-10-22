@@ -7,6 +7,11 @@
 #include <semaphore.h>
 #include <fcntl.h>
 
+typedef struct {
+    char accion[9]; 
+    char nombre[20];
+} pedido;
+
 void crearServidor();
 int crearMemoriaCompartida();
 
@@ -24,13 +29,11 @@ int main()
 
     //crearServidor();
     int shmid = crearMemoriaCompartida();
-    char* areaCompartida = (char*)shmat(shmid,NULL,0);
+    pedido* areaCompartida = (pedido*)shmat(shmid,NULL,0);
    
-
-    printf("Ejecuta\n");
     sem_wait(semComandos);
 
-    printf("El cliente dice %s", areaCompartida);
+    printf("El cliente dice %d", areaCompartida->numero1);
 
     shmdt(&areaCompartida);
     shmctl(shmid, IPC_RMID, NULL);
@@ -72,3 +75,5 @@ int crearMemoriaCompartida() {
 
     return shmid;
 }
+
+ALTA facu caniche M 
