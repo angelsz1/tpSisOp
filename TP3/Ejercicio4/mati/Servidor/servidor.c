@@ -12,41 +12,25 @@ int crearMemoriaCompartida();
 
 int main()
 {
-    printf("Llega hasta aca");
+    
+    sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+    sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
+    if (semComandos == SEM_FAILED || semRespuesta == SEM_FAILED) {
+        sem_close(semComandos);
+        sem_close(semRespuesta);
+        printf("Error creando el semaforo");
+        exit(-1);
+    }
+
     //crearServidor();
     int shmid = crearMemoriaCompartida();
     char* areaCompartida = (char*)shmat(shmid,NULL,0);
+   
 
-    sem_t *semComandos = sem_open("/comando", O_CREAT, 0666, 0);
-    sem_t *semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
+    printf("Ejecuta\n");
+    sem_wait(semComandos);
 
-    //Crear semaforo para area compartida
-    while (1) {
-        printf("Llega hasta aca");
-        sem_wait(semComandos);
-        printf("No Llega hasta aca");
-        //P area compartida
-        if (strcmp(areaCompartida, "Alta") == 0) {
-            areaCompartida = "";
-            sem_post(semRespuesta);
-        };
-
-        //V area compartida
-
-        //P area compartida
-        if (strcmp(areaCompartida, "Baja") == 0) {
-            areaCompartida = "";
-            sem_post(semRespuesta);
-        };
-        //V area compartida
-        
-        //P area compartida
-        if (strcmp(areaCompartida, "Consulta") == 0) {
-            areaCompartida = "";
-            sem_post(semRespuesta);
-        };
-        //V area compartida
-    }
+    printf("El cliente dice %s", areaCompartida);
 
     shmdt(&areaCompartida);
     shmctl(shmid, IPC_RMID, NULL);
@@ -79,7 +63,6 @@ void crearServidor() {
 int crearMemoriaCompartida() {
     char* clave = "../refugio";
     key_t key = ftok(clave, 4);
-    printf("KEY: %d", key);
     int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
 
     if (shmid == -1) {
