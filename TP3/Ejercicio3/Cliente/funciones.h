@@ -14,12 +14,10 @@
 
 #include <signal.h>
 
-void pedirComando(char* textoCliente);
+void pedirComando(char *textoCliente);
 
-int validarSintaxis(char* textoCliente);
+int validarSintaxis(char *textoCliente);
 
-int esNumero(char* cadena);
-
-void nada();
+int esNumero(char *cadena);
 
 #endif // FUNCIONES_H_INCLUDED
