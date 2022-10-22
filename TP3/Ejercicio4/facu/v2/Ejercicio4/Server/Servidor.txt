@@ -1,0 +1,13 @@
+MC => Memoria Compartida
+
+- Se inicializa el Servidor
+	- Durante este proceso, se genera el demonio
+- El servidor se queda esperando hasta que el semaforo de consultas se active
+- Cuando encuentra una consulta, se quedara a la espera de que se libere la MC
+- Una vez liberada, tomara la consulta y luego la atendera
+- Las consultas pueden ser de 3 tipos:
+	- ALTA
+	- BAJA
+	- CONSULTA
+- Por lo que dependiendo del tipo de consulta que nos llegue, existira una
+	funcion que lo maneje.
