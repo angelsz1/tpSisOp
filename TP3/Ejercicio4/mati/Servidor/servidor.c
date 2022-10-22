@@ -4,43 +4,59 @@
 #include <sys/shm.h>
 #include <unistd.h>
 #include <string.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
 void crearServidor();
 int crearMemoriaCompartida();
 
 int main()
 {
-    crearServidor();
+    printf("Llega hasta aca");
+    //crearServidor();
     int shmid = crearMemoriaCompartida();
-
     char* areaCompartida = (char*)shmat(shmid,NULL,0);
 
-    //Crear semaforo para esperar consultas
+    sem_t *semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+    sem_t *semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
+
     //Crear semaforo para area compartida
     while (1) {
-        //P semaforo consultas
+        printf("Llega hasta aca");
+        sem_wait(semComandos);
+        printf("No Llega hasta aca");
         //P area compartida
         if (strcmp(areaCompartida, "Alta") == 0) {
-            printf("Hacemos alta\n");
             areaCompartida = "";
+            sem_post(semRespuesta);
         };
+
         //V area compartida
 
         //P area compartida
         if (strcmp(areaCompartida, "Baja") == 0) {
-            printf("Hacemos baja\n");
             areaCompartida = "";
+            sem_post(semRespuesta);
         };
         //V area compartida
         
         //P area compartida
         if (strcmp(areaCompartida, "Consulta") == 0) {
-            printf("Hacemos consulta\n");
             areaCompartida = "";
+            sem_post(semRespuesta);
         };
         //V area compartida
     }
-    
+
+    shmdt(&areaCompartida);
+    shmctl(shmid, IPC_RMID, NULL);
+
+    sem_close(semComandos);
+    sem_close(semRespuesta);
+
+    sem_unlink("/comando");
+    sem_unlink("/respuesta");
+
     return 0;
 }
 
@@ -63,6 +79,7 @@ void crearServidor() {
 int crearMemoriaCompartida() {
     char* clave = "../refugio";
     key_t key = ftok(clave, 4);
+    printf("KEY: %d", key);
     int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
 
     if (shmid == -1) {
