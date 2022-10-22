@@ -3,6 +3,8 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <string.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
 int main()
 {
@@ -13,12 +15,17 @@ int main()
         printf("Hubo un error al intentar abrir el área compartida de memoria.");
         exit(1);
     }
-
     char* areaCompartida = (char*)shmat(shmid,NULL,0);
 
-    char accion[10];
-    printf("Ingrese una accion ");
-    scanf("%s", areaCompartida);
+    sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+
+    printf("Ecribi algo: ");
+    fgets(areaCompartida, 20, stdin);
+    
+    sem_post(semComandos);
+
+    //shmdt(&areaCompartida);
+    //shmctl(shmid, IPC_RMID, NULL);
 
     return 0;
 }
