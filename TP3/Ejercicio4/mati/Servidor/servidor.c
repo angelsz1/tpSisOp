@@ -10,7 +10,17 @@
 typedef struct {
     char accion[9]; 
     char nombre[20];
-} pedido;
+    char raza[20];
+    char sexo;
+    char condicion[2];
+} Pedido;
+
+typedef struct {
+    char nombre[20];
+    char raza[20];
+    char sexo;
+    char condicion[2];
+} Gato;
 
 void crearServidor();
 int crearMemoriaCompartida();
@@ -29,13 +39,31 @@ int main()
 
     //crearServidor();
     int shmid = crearMemoriaCompartida();
-    pedido* areaCompartida = (pedido*)shmat(shmid,NULL,0);
+    Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
    
     sem_wait(semComandos);
 
-    printf("El cliente dice %d", areaCompartida->numero1);
+    if(strcmp("ALTA", pedido->accion) == 0) {
+        FILE* gatosFile = fopen("gatos.txt", "wb");
+        Gato gato;
+        strcpy(gato.nombre, pedido->nombre);
+        strcpy(gato.raza, pedido->raza);
+        gato.sexo = pedido->sexo;
+        strcpy(gato.condicion, pedido->condicion);
+        
+        fwrite(&gato, sizeof(Gato), 1, gatosFile);
+        fclose(gatosFile);
+    }
 
-    shmdt(&areaCompartida);
+    if(strcmp("CONSULTA", pedido->accion) == 0) {
+        FILE* gatosFile = fopen("gatos.txt", "rb");
+        Gato gato;
+        fread(&gato, sizeof(Gato), 1, gatosFile);
+        printf("NOMBRE: %s\nRAZA: %s", gato.nombre, gato.raza);
+        fclose(gatosFile);
+    }
+
+    shmdt(&pedido);
     shmctl(shmid, IPC_RMID, NULL);
 
     sem_close(semComandos);
@@ -75,5 +103,3 @@ int crearMemoriaCompartida() {
 
     return shmid;
 }
-
-ALTA facu caniche M 

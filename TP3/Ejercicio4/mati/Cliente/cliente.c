@@ -7,9 +7,39 @@
 #include <fcntl.h>
 
 typedef struct {
-    int numero1;
-    int numero2;
-} pedido;
+    char accion[9]; 
+    char nombre[20];
+    char raza[20];
+    char sexo;
+    char condicion[2];
+} Pedido;
+
+char* parsearCampo(char* texto, char* campo) {
+    char caracteres[20];
+    int i = 0;
+
+    while(*texto != ' ' && *texto != '\0' && *texto != '\n') {
+        caracteres[i] = *texto;
+        i++;
+        texto++;
+    }
+
+    if(*texto != '\0')
+        texto++;
+
+    caracteres[i] = '\0';
+    strcpy(campo, caracteres);
+
+    return texto;
+}
+
+void parsearPedido(char* texto, Pedido* pedido) {
+    texto = parsearCampo(texto, pedido->accion);
+    texto = parsearCampo(texto, pedido->nombre);
+    texto = parsearCampo(texto, pedido->raza);
+    texto = parsearCampo(texto, &(pedido->sexo));
+    texto = parsearCampo(texto, pedido->condicion);
+}
 
 int main()
 {
@@ -20,18 +50,25 @@ int main()
         printf("Hubo un error al intentar abrir el área compartida de memoria.");
         exit(1);
     }
-    pedido* areaCompartida = (pedido*)shmat(shmid,NULL,0);
+    Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
 
     sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+ 
+    char texto[200];
 
-    printf("Ecribi algo: ");
-    scanf("%d", &(areaCompartida->numero1));
-    //fgets(areaCompartida->numero1, 20, stdin);
-    
+    printf("Que accion desea realizar\n");
+    printf("ALTA [nombre] [raza] [sexo] [condicion]\n");
+    printf("BAJA [nombre]\n");
+    printf("CONSULTA [?nombre]\n");
+
+    fgets(texto, 200, stdin);
+    parsearPedido(&texto, pedido);
+
     sem_post(semComandos);
 
-    //shmdt(&areaCompartida);
-    //shmctl(shmid, IPC_RMID, NULL);
+    shmdt(&pedido);
+    shmctl(shmid, IPC_RMID, NULL);
 
     return 0;
 }
+
