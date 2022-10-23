@@ -14,6 +14,11 @@ typedef struct {
     char condicion[2];
 } Pedido;
 
+typedef struct {
+    int status; 
+    char contenido[100];
+} Respuesta;
+
 char* parsearCampo(char* texto, char* campo) {
     char caracteres[20];
     int i = 0;
@@ -43,6 +48,9 @@ void parsearPedido(char* texto, Pedido* pedido) {
 
 int main()
 {
+    sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+    sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
+
     char* clave = "../refugio";
     key_t key = ftok(clave, 4);
     int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
@@ -50,10 +58,10 @@ int main()
         printf("Hubo un error al intentar abrir el área compartida de memoria.");
         exit(1);
     }
-    Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
 
-    sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
- 
+    Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
+    Respuesta* respuesta = (Respuesta*)shmat(shmid,NULL,0);
+
     char texto[200];
 
     printf("Que accion desea realizar\n");
@@ -64,9 +72,20 @@ int main()
     fgets(texto, 200, stdin);
     parsearPedido(&texto, pedido);
 
+    char tipoPedido[9];
+    strcpy(tipoPedido, pedido->accion);
+
     sem_post(semComandos);
+    sem_wait(semRespuesta);
+
+    if(respuesta->status == 200) {
+        printf("%s\n", respuesta->contenido);
+    } else {
+        printf("Error: %s\n", respuesta->contenido);
+    }
 
     shmdt(&pedido);
+    shmdt(&respuesta);
     shmctl(shmid, IPC_RMID, NULL);
 
     return 0;
