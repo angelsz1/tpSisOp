@@ -72,21 +72,22 @@ int main()
     fgets(texto, 200, stdin);
     parsearPedido(&texto, pedido);
 
-    char tipoPedido[9];
-    strcpy(tipoPedido, pedido->accion);
-
     sem_post(semComandos);
     sem_wait(semRespuesta);
 
     if(respuesta->status >= 200 && respuesta->status < 300) {
         printf("%s\n", respuesta->contenido);
     } else {
-        printf("Error: %s\n", respuesta->contenido);
+        printf("%d", respuesta->status);
+        printf("Error. %s\n", respuesta->contenido);
     }
 
     shmdt(&pedido);
     shmdt(&respuesta);
     shmctl(shmid, IPC_RMID, NULL);
+
+    sem_close(semComandos);
+    sem_close(semRespuesta);
 
     return 0;
 }

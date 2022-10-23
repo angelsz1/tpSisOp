@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include "lista.h"
 #include <memory.h>
+#include <signal.h>
 
 typedef struct {
     char accion[9]; 
@@ -30,14 +31,22 @@ typedef struct {
 } Respuesta;
 
 void crearServidor();
+//void signalHandler(int signal);
+void cerrarServer();
 int crearMemoriaCompartida();
 int compararGato(const void* gato1, const void* gato2);
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
+void error(Pedido* pedido, Respuesta* respuesta);
+
+int serverActivo = 1;
 
 int main()
 {
+    //crearServidor();
+    /*if (signal(SIGUSR1, signalHandler) == SIG_ERR)
+        printf("No se pudo capturar la senal SIGUSR1\n");*/
     Lista listaGatos;
     crearLista(&listaGatos);
 
@@ -50,36 +59,25 @@ int main()
         exit(-1);
     }
 
-    //crearServidor();
     int shmid = crearMemoriaCompartida();
     Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
     Respuesta* respuesta = (Respuesta*)shmat(shmid,NULL,0);
    
-    int x=0;
-    while (x<5)
+    while (1)
     {
-        x++;
         sem_wait(semComandos);
 
-        if(strcmp("ALTA", pedido->accion) == 0) {
+        if(strcmp("ALTA", pedido->accion) == 0)
             alta(&listaGatos, pedido, respuesta);
-        }
 
-        else if(strcmp("BAJA", pedido->accion) == 0) {
+        else if(strcmp("BAJA", pedido->accion) == 0)
             baja(&listaGatos, pedido, respuesta);
-        }
 
-        else if(strcmp("CONSULTA", pedido->accion) == 0) {
+        else if(strcmp("CONSULTA", pedido->accion) == 0)
             consulta(&listaGatos, pedido, respuesta);
-        }
-
-        else {
-            char accion[9];
-            strcpy(accion, pedido->accion);
-            respuesta->status = 400;
-            strcpy(respuesta->contenido, "BAD REQUEST: accion no valida ");
-            strcat(respuesta->contenido, accion);
-        }
+        
+        else
+            error(pedido, respuesta);
 
         sem_post(semRespuesta);
     }
@@ -114,13 +112,21 @@ void crearServidor() {
     }
 }
 
+/*void signalHandler(int signal)
+{
+    if (signal == SIGUSR1) {
+        printf("signal");
+        //serverActivo = 0;
+    }
+}*/
+
 int crearMemoriaCompartida() {
     char* clave = "../refugio";
     key_t key = ftok(clave, 4);
     int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
 
     if (shmid == -1) {
-        printf("Hubo un error al intentar abrir el área compartida de memoria.");
+        printf("Hubo un error al intentar abrir el área de memoria compartida.");
         exit(1);
     }
 
@@ -134,6 +140,7 @@ int compararGato(const void* gato1, const void* gato2) {
 }
 
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
+    printf("Haciendo el alta");
     Gato gato;
     strcpy(gato.nombre, pedido->nombre);
     strcpy(gato.raza, pedido->raza);
@@ -146,6 +153,7 @@ void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
         respuesta->status = 200;
         strcpy(respuesta->contenido, gato.nombre);
         strcat(respuesta->contenido, " ingresado correctamente");
+        printf("status: %d", respuesta->status);
     } else if (resultado == 2){
         respuesta->status = 409;
         strcpy(respuesta->contenido, gato.nombre);
@@ -190,4 +198,12 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
             strcat(respuesta->contenido, " no encontrado");
         }
     }
+}
+
+void error(Pedido* pedido, Respuesta* respuesta) {
+    char accion[9];
+    strcpy(accion, pedido->accion);
+    respuesta->status = 400;
+    strcpy(respuesta->contenido, "BAD REQUEST: accion no valida ");
+    strcat(respuesta->contenido, accion);
 }
