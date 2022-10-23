@@ -26,13 +26,15 @@ typedef struct {
 
 typedef struct {
     int status; 
-    char contenido[100];
+    char contenido[2000];
 } Respuesta;
 
 void crearServidor();
 int crearMemoriaCompartida();
 int compararGato(const void* gato1, const void* gato2);
-void mostrarGato(const void* gato);
+void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
+void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
+void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 
 int main()
 {
@@ -54,43 +56,21 @@ int main()
     Respuesta* respuesta = (Respuesta*)shmat(shmid,NULL,0);
    
     int x=0;
-    while (x<3)
+    while (x<5)
     {
         x++;
         sem_wait(semComandos);
 
         if(strcmp("ALTA", pedido->accion) == 0) {
-            Gato gato;
-            strcpy(gato.nombre, pedido->nombre);
-            strcpy(gato.raza, pedido->raza);
-            gato.sexo = pedido->sexo;
-            strcpy(gato.condicion, pedido->condicion);
+            alta(&listaGatos, pedido, respuesta);
+        }
 
-            insertarEnListaOrdenada(&listaGatos, &gato, sizeof(Gato), compararGato);
-
-            respuesta->status = 200;
-            strcpy(respuesta->contenido, gato.nombre);
-            strcat(respuesta->contenido, " ingresado correctamente");           
+        else if(strcmp("BAJA", pedido->accion) == 0) {
+            baja(&listaGatos, pedido, respuesta);
         }
 
         else if(strcmp("CONSULTA", pedido->accion) == 0) {
-            Gato gato;
-            strcpy(gato.nombre, pedido->nombre);
-            
-            int encontrado = buscarEnLista(&listaGatos, &gato, sizeof(Gato), compararGato);
-
-            if(encontrado) {
-                respuesta->status = 200;
-                char mensaje[200];
-                sprintf (mensaje, "Nombre: %s \nRaza: %s \nSexo: %c \nCondicion: %s\n", 
-                gato.nombre, gato.raza, gato.sexo, gato.condicion);
-
-                strcpy(respuesta->contenido, mensaje);
-            } else {
-                respuesta->status = 404;
-                strcpy(respuesta->contenido, gato.nombre);
-                strcat(respuesta->contenido, " no encontrado");
-            }
+            consulta(&listaGatos, pedido, respuesta);
         }
 
         else {
@@ -113,7 +93,6 @@ int main()
 
     sem_unlink("/comando");
     sem_unlink("/respuesta");
-    mostrarLista(&listaGatos, mostrarGato);
     vaciarLista(&listaGatos);
 
     return 0;
@@ -154,8 +133,61 @@ int compararGato(const void* gato1, const void* gato2) {
     return strcmp(g1.nombre, g2.nombre);
 }
 
-void mostrarGato(const void* gato) {
-    Gato g = *(Gato*)gato;
-    printf("Nombre: %s\n", g.nombre);
+void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
+    Gato gato;
+    strcpy(gato.nombre, pedido->nombre);
+    strcpy(gato.raza, pedido->raza);
+    gato.sexo = pedido->sexo;
+    strcpy(gato.condicion, pedido->condicion);
+
+    int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato), compararGato);
+
+    if(resultado == 1) {
+        respuesta->status = 200;
+        strcpy(respuesta->contenido, gato.nombre);
+        strcat(respuesta->contenido, " ingresado correctamente");
+    } else if (resultado == 2){
+        respuesta->status = 409;
+        strcpy(respuesta->contenido, gato.nombre);
+        strcat(respuesta->contenido, " ya existe");
+    }     
 }
- 
+
+void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
+    Gato gato;
+    strcpy(gato.nombre, pedido->nombre);
+    eliminarDeLista(listaGatos, &gato, sizeof(Gato), compararGato);
+
+    respuesta->status = 204;
+    strcpy(respuesta->contenido, gato.nombre);
+    strcat(respuesta->contenido, " eliminado correctamente");             
+}
+
+void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
+    Gato gato;
+    strcpy(gato.nombre, pedido->nombre);
+
+    if(strcmp("", pedido->nombre) == 0) {
+        respuesta->status = 200;
+        listarTodos(listaGatos, respuesta->contenido);
+    } else {
+        int encontrado = buscarEnLista(listaGatos, &gato, sizeof(Gato), compararGato);
+        if(encontrado) {
+            respuesta->status = 200;
+            char mensaje[200];
+            char aux[70];
+
+            sprintf (mensaje, "|%12s|%12s|%5s|%10s|\n", 
+            "Nombre", "Raza", "Sexo", "Condicion");
+            sprintf (aux, "|%12s|%12s|%5c|%10s|\n", 
+            gato.nombre, gato.raza, gato.sexo, gato.condicion);
+
+            strcat(mensaje, aux);
+            strcpy(respuesta->contenido, mensaje);
+        } else {
+            respuesta->status = 404;
+            strcpy(respuesta->contenido, gato.nombre);
+            strcat(respuesta->contenido, " no encontrado");
+        }
+    }
+}

@@ -5,6 +5,7 @@
 typedef int (*FuncComparar)(const void*, const void*);
 typedef int (*FuncAccion)(const void*, void*);
 typedef void (*FuncMostrar)(const void*);
+typedef void (*FuncCopiar)(const void*, void*);
 
 typedef struct sNodo {
     void* elemento;
@@ -27,4 +28,5 @@ void ordenarLista(Lista* lista, FuncComparar comparar);
 void mostrarLista(Lista* lista, FuncMostrar mostrar);
 void vaciarLista(Lista* lista);
 void cantElementosEnLista(Lista* lista, unsigned* cantElementos);
+void listarTodos(Lista* lista, void* texto);
 #endif // LISTA_H

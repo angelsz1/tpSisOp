@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct {
     int status; 
-    char contenido[100];
+    char contenido[2000];
 } Respuesta;
 
 char* parsearCampo(char* texto, char* campo) {
@@ -78,7 +78,7 @@ int main()
     sem_post(semComandos);
     sem_wait(semRespuesta);
 
-    if(respuesta->status == 200) {
+    if(respuesta->status >= 200 && respuesta->status < 300) {
         printf("%s\n", respuesta->contenido);
     } else {
         printf("Error: %s\n", respuesta->contenido);

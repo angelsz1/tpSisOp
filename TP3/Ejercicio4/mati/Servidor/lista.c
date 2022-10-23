@@ -2,8 +2,16 @@
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define min(a, b) ((a)<(b) ? (a) : (b))
+
+typedef struct {
+    char nombre[20];
+    char raza[20];
+    char sexo;
+    char condicion[2];
+} Gato;
 
 Nodo* crearNodo(const void* elemento, size_t tamElemento) {
     Nodo* nodoNuevo = (Nodo*)malloc(sizeof(Nodo));
@@ -109,5 +117,25 @@ void vaciarLista(Lista* lista) {
         *lista = nodoAEliminar->siguiente;
         free(nodoAEliminar->elemento);
         free(nodoAEliminar);
+    }
+}
+
+void listarTodos(Lista* lista, void* texto) {
+    Gato gato;
+    char aux[70];
+
+    if(!(*lista)) {
+        strcpy(texto, "No hay gatos en el refugio");
+        return;
+    }
+
+    sprintf (texto, "|%12s|%12s|%5s|%10s|\n", 
+    "Nombre", "Raza", "Sexo", "Condicion");
+    while(*lista) {
+        memcpy(&gato, (*lista)->elemento, sizeof(Gato));
+        sprintf (aux, "|%12s|%12s|%5c|%13s|\n", 
+        gato.nombre, gato.raza, gato.sexo, gato.condicion);
+        lista = &(*lista)->siguiente;
+        strcat(texto, aux);
     }
 }
