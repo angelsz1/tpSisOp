@@ -31,8 +31,8 @@ typedef struct {
 } Respuesta;
 
 void crearServidor();
-//void signalHandler(int signal);
-void cerrarServer();
+void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos);
+void signalHandler(int signal);
 int crearMemoriaCompartida();
 int compararGato(const void* gato1, const void* gato2);
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
@@ -44,16 +44,19 @@ int serverActivo = 1;
 
 int main()
 {
-    //crearServidor();
-    /*if (signal(SIGUSR1, signalHandler) == SIG_ERR)
-        printf("No se pudo capturar la senal SIGUSR1\n");*/
+    crearServidor();
+    if (signal(SIGUSR1, signalHandler) == SIG_ERR)
+        printf("No se pudo capturar la senal SIGUSR1\n");
+    if (signal(SIGINT, signalHandler) == SIG_ERR)
+        printf("No se pudo capturar la senal SIGUSR1\n");
+
     Lista listaGatos;
     crearLista(&listaGatos);
 
-    sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+    sem_t* semComando = sem_open("/comando", O_CREAT, 0666, 0);
     sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
-    if (semComandos == SEM_FAILED || semRespuesta == SEM_FAILED) {
-        sem_close(semComandos);
+    if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
+        sem_close(semComando);
         sem_close(semRespuesta);
         printf("Error creando el semaforo");
         exit(-1);
@@ -63,9 +66,9 @@ int main()
     Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
     Respuesta* respuesta = (Respuesta*)shmat(shmid,NULL,0);
    
-    while (1)
+    while (serverActivo)
     {
-        sem_wait(semComandos);
+        sem_wait(semComando);
 
         if(strcmp("ALTA", pedido->accion) == 0)
             alta(&listaGatos, pedido, respuesta);
@@ -82,18 +85,22 @@ int main()
         sem_post(semRespuesta);
     }
 
+    cerrarServidor(pedido, respuesta, shmid, semComando, semRespuesta,  &listaGatos);
+
+    return 0;
+}
+
+void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos) {
     shmdt(&pedido);
     shmdt(&respuesta);
     shmctl(shmid, IPC_RMID, NULL);
 
-    sem_close(semComandos);
+    sem_close(semComando);
     sem_close(semRespuesta);
 
     sem_unlink("/comando");
     sem_unlink("/respuesta");
-    vaciarLista(&listaGatos);
-
-    return 0;
+    vaciarLista(listaGatos);
 }
 
 void crearServidor() {
@@ -112,13 +119,12 @@ void crearServidor() {
     }
 }
 
-/*void signalHandler(int signal)
+void signalHandler(int signal)
 {
     if (signal == SIGUSR1) {
-        printf("signal");
-        //serverActivo = 0;
+        serverActivo = 0;
     }
-}*/
+}
 
 int crearMemoriaCompartida() {
     char* clave = "../refugio";

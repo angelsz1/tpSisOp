@@ -48,7 +48,7 @@ void parsearPedido(char* texto, Pedido* pedido) {
 
 int main()
 {
-    sem_t* semComandos = sem_open("/comando", O_CREAT, 0666, 0);
+    sem_t* semComando = sem_open("/comando", O_CREAT, 0666, 0);
     sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
 
     char* clave = "../refugio";
@@ -72,7 +72,7 @@ int main()
     fgets(texto, 200, stdin);
     parsearPedido(&texto, pedido);
 
-    sem_post(semComandos);
+    sem_post(semComando);
     sem_wait(semRespuesta);
 
     if(respuesta->status >= 200 && respuesta->status < 300) {
@@ -86,7 +86,7 @@ int main()
     shmdt(&respuesta);
     shmctl(shmid, IPC_RMID, NULL);
 
-    sem_close(semComandos);
+    sem_close(semComando);
     sem_close(semRespuesta);
 
     return 0;
