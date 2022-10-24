@@ -9,49 +9,31 @@
 #include "lista.h"
 #include <memory.h>
 #include <signal.h>
+#include "../global.h"
 
-typedef struct {
-    char accion[9]; 
-    char nombre[20];
-    char raza[20];
-    char sexo;
-    char condicion[2];
-} Pedido;
-
-typedef struct {
-    char nombre[20];
-    char raza[20];
-    char sexo;
-    char condicion[2];
-} Gato;
-
-typedef struct {
-    int status; 
-    char contenido[2000];
-} Respuesta;
+#define ELIMINADO 1
+#define NOT_FOUND 0
 
 void crearServidor();
 void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos);
 void signalHandler(int signal);
 int crearMemoriaCompartida();
-int compararGato(const void* gato1, const void* gato2);
+
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void error(Pedido* pedido, Respuesta* respuesta);
+void atraparSeniales();
 
 int serverActivo = 1;
 
 int main()
 {
     crearServidor();
-    if (signal(SIGUSR1, signalHandler) == SIG_ERR)
-        printf("No se pudo capturar la senal SIGUSR1\n");
-    if (signal(SIGINT, signalHandler) == SIG_ERR)
-        printf("No se pudo capturar la senal SIGUSR1\n");
+    atraparSeniales();
 
     Lista listaGatos;
-    crearLista(&listaGatos);
+    crearLista(&listaGatos);    
 
     sem_t* semComando = sem_open("/comando", O_CREAT, 0666, 0);
     sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
@@ -90,19 +72,6 @@ int main()
     return 0;
 }
 
-void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos) {
-    shmdt(&pedido);
-    shmdt(&respuesta);
-    shmctl(shmid, IPC_RMID, NULL);
-
-    sem_close(semComando);
-    sem_close(semRespuesta);
-
-    sem_unlink("/comando");
-    sem_unlink("/respuesta");
-    vaciarLista(listaGatos);
-}
-
 void crearServidor() {
     pid_t process_id = 0;
 
@@ -117,6 +86,19 @@ void crearServidor() {
         printf("process_id of child process %d \n", process_id);
         exit(0);
     }
+}
+
+void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos) {
+    shmdt(&pedido);
+    shmdt(&respuesta);
+    shmctl(shmid, IPC_RMID, NULL);
+
+    sem_close(semComando);
+    sem_close(semRespuesta);
+
+    sem_unlink("/comando");
+    sem_unlink("/respuesta");
+    vaciarLista(listaGatos);
 }
 
 void signalHandler(int signal)
@@ -139,42 +121,40 @@ int crearMemoriaCompartida() {
     return shmid;
 }
 
-int compararGato(const void* gato1, const void* gato2) {
-    Gato g1 = *(Gato*)gato1;
-    Gato g2 = *(Gato*)gato2;
-    return strcmp(g1.nombre, g2.nombre);
-}
-
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
-    printf("Haciendo el alta");
     Gato gato;
     strcpy(gato.nombre, pedido->nombre);
     strcpy(gato.raza, pedido->raza);
     gato.sexo = pedido->sexo;
     strcpy(gato.condicion, pedido->condicion);
 
-    int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato), compararGato);
+    int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato));
 
     if(resultado == 1) {
         respuesta->status = 200;
         strcpy(respuesta->contenido, gato.nombre);
         strcat(respuesta->contenido, " ingresado correctamente");
-        printf("status: %d", respuesta->status);
     } else if (resultado == 2){
         respuesta->status = 409;
         strcpy(respuesta->contenido, gato.nombre);
         strcat(respuesta->contenido, " ya existe");
-    }     
+    }
 }
 
 void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
     Gato gato;
     strcpy(gato.nombre, pedido->nombre);
-    eliminarDeLista(listaGatos, &gato, sizeof(Gato), compararGato);
-
-    respuesta->status = 204;
-    strcpy(respuesta->contenido, gato.nombre);
-    strcat(respuesta->contenido, " eliminado correctamente");             
+    int resultado = eliminarDeLista(listaGatos, &gato, sizeof(Gato));
+    if(resultado == ELIMINADO) {
+        respuesta->status = 204;
+        strcpy(respuesta->contenido, gato.nombre);
+        strcat(respuesta->contenido, " eliminado correctamente");
+    } 
+    else if (resultado == NOT_FOUND) {
+        respuesta->status = 404;
+        strcpy(respuesta->contenido, gato.nombre);
+        strcat(respuesta->contenido, " no existe");
+    }
 }
 
 void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
@@ -185,14 +165,14 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
         respuesta->status = 200;
         listarTodos(listaGatos, respuesta->contenido);
     } else {
-        int encontrado = buscarEnLista(listaGatos, &gato, sizeof(Gato), compararGato);
+        int encontrado = buscarEnLista(listaGatos, &gato, sizeof(Gato));
         if(encontrado) {
             respuesta->status = 200;
             char mensaje[200];
             char aux[70];
 
-            sprintf (mensaje, "|%12s|%12s|%5s|%10s|\n", 
-            "Nombre", "Raza", "Sexo", "Condicion");
+            sprintf (mensaje, ANSI_COLOR_GREEN"|%12s|%12s|%5s|%10s|\n", 
+            "Nombre", "Raza", "Sexo", "Condicion"ANSI_COLOR_RESET);
             sprintf (aux, "|%12s|%12s|%5c|%10s|\n", 
             gato.nombre, gato.raza, gato.sexo, gato.condicion);
 
@@ -213,3 +193,14 @@ void error(Pedido* pedido, Respuesta* respuesta) {
     strcpy(respuesta->contenido, "BAD REQUEST: accion no valida ");
     strcat(respuesta->contenido, accion);
 }
+
+void atraparSeniales() {
+    if (signal(SIGUSR1, signalHandler) == SIG_ERR)
+        printf("No se pudo capturar la senal SIGUSR1\n");
+    if (signal(SIGINT, signalHandler) == SIG_ERR)
+        printf("No se pudo capturar la senal SIGUSR1\n");
+}
+
+//Validar entrada del usuario
+//Aceptar key insensitive
+//Extraer codigo a otros archivos

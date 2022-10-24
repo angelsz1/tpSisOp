@@ -21,10 +21,10 @@ typedef struct {
 } Iterador;
 
 void crearLista(Lista* lista);
-int insertarEnListaOrdenada(Lista* lista, const void* elemento, size_t tamElemento, FuncComparar comparar);
-int buscarEnLista(const Lista* lista, void* elemento, size_t tamElemento, FuncComparar comparar);
-int eliminarDeLista(Lista* lista, void* elemento, size_t tamElemento, FuncComparar comparar);
-void ordenarLista(Lista* lista, FuncComparar comparar);
+int insertarEnListaOrdenada(Lista* lista, const void* elemento, size_t tamElemento);
+int buscarEnLista(const Lista* lista, void* elemento, size_t tamElemento);
+int eliminarDeLista(Lista* lista, void* elemento, size_t tamElemento);
+void ordenarLista(Lista* lista);
 void mostrarLista(Lista* lista, FuncMostrar mostrar);
 void vaciarLista(Lista* lista);
 void cantElementosEnLista(Lista* lista, unsigned* cantElementos);

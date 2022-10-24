@@ -3,15 +3,11 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../global.h"
 
 #define min(a, b) ((a)<(b) ? (a) : (b))
 
-typedef struct {
-    char nombre[20];
-    char raza[20];
-    char sexo;
-    char condicion[2];
-} Gato;
+int compararGato(const void* gato1, const void* gato2);
 
 Nodo* crearNodo(const void* elemento, size_t tamElemento) {
     Nodo* nodoNuevo = (Nodo*)malloc(sizeof(Nodo));
@@ -41,13 +37,29 @@ void destruirNodo(Nodo* nodoAEliminar, void* elemento, size_t tamElemento) {
 
 void crearLista(Lista* lista) {
     *lista = NULL;
+
+    Gato gato;
+    FILE* archivoGatos = fopen("gatos", "rb");
+    
+    if (!archivoGatos) {
+        puts("Error abriendo el archivo");
+    }
+
+    fread(&gato, sizeof(Gato), 1, archivoGatos);
+    while (!feof(archivoGatos))
+    {
+        insertarEnListaOrdenada(lista, &gato, sizeof(Gato));
+        fread(&gato, sizeof(Gato), 1, archivoGatos);
+    }
+
+    fclose(archivoGatos);
 }
 
-int insertarEnListaOrdenada(Lista* lista, const void* elemento, size_t tamElemento, FuncComparar comparar) {
-    while(*lista && (comparar(elemento, (*lista)->elemento) > 0)) {
+int insertarEnListaOrdenada(Lista* lista, const void* elemento, size_t tamElemento) {
+    while(*lista && (compararGato(elemento, (*lista)->elemento) > 0)) {
         lista = &(*lista)->siguiente;
     }
-    if(*lista && (comparar(elemento, (*lista)->elemento) == 0)) {
+    if(*lista && (compararGato(elemento, (*lista)->elemento) == 0)) {
         return 2; ///DUPLICADO
     }
     Nodo* nodoNuevo = (Nodo*)malloc(sizeof(Nodo));
@@ -66,11 +78,11 @@ int insertarEnListaOrdenada(Lista* lista, const void* elemento, size_t tamElemen
     return 1; ///TODO OK;
 }
 
-int eliminarDeLista(Lista* lista, void* elemento, size_t tamElemento, FuncComparar comparar) {
-    while (*lista && comparar(elemento, (*lista)->elemento) > 0) {
+int eliminarDeLista(Lista* lista, void* elemento, size_t tamElemento) {
+    while (*lista && compararGato(elemento, (*lista)->elemento) > 0) {
         lista = &(*lista)->siguiente;
     }
-    if(!*lista || comparar(elemento, (*lista)->elemento) < 0) {
+    if(!*lista || compararGato(elemento, (*lista)->elemento) < 0) {
         return 0;
     }
 
@@ -82,12 +94,12 @@ int eliminarDeLista(Lista* lista, void* elemento, size_t tamElemento, FuncCompar
     return 1;
 }
 
-int buscarEnLista(const Lista* lista, void* elemento, size_t tamElemento, FuncComparar comparar) {
+int buscarEnLista(const Lista* lista, void* elemento, size_t tamElemento) {
     Nodo* actual = *lista;
-    while (actual && comparar(elemento, actual->elemento) > 0) {
+    while (actual && compararGato(elemento, actual->elemento) > 0) {
         actual = actual->siguiente;
     }
-    if(!actual || comparar(elemento, actual->elemento) < 0) {
+    if(!actual || compararGato(elemento, actual->elemento) < 0) {
         return 0;
     }
 
@@ -112,12 +124,22 @@ void cantElementosEnLista(Lista* lista, unsigned* cantElementos) {
 }
 
 void vaciarLista(Lista* lista) {
+    FILE* archivoGatos = fopen("gatos", "wb");
+    
     while(*lista) {
         Nodo* nodoAEliminar = *lista;
+        
+        if (!archivoGatos) {
+            puts("Error abriendo el archivo");
+        }
+
+        fwrite(nodoAEliminar->elemento, sizeof(Gato), 1, archivoGatos);
         *lista = nodoAEliminar->siguiente;
         free(nodoAEliminar->elemento);
         free(nodoAEliminar);
     }
+
+    fclose(archivoGatos);
 }
 
 void listarTodos(Lista* lista, void* texto) {
@@ -129,13 +151,19 @@ void listarTodos(Lista* lista, void* texto) {
         return;
     }
 
-    sprintf (texto, "|%12s|%12s|%5s|%10s|\n", 
+    sprintf (texto, ANSI_COLOR_GREEN"|%12s|%12s|%5s|%10s|\n"ANSI_COLOR_RESET, 
     "Nombre", "Raza", "Sexo", "Condicion");
     while(*lista) {
         memcpy(&gato, (*lista)->elemento, sizeof(Gato));
-        sprintf (aux, "|%12s|%12s|%5c|%13s|\n", 
+        sprintf (aux, "|%12s|%12s|%5c|%10s|\n", 
         gato.nombre, gato.raza, gato.sexo, gato.condicion);
         lista = &(*lista)->siguiente;
         strcat(texto, aux);
     }
+}
+
+int compararGato(const void* gato1, const void* gato2) {
+    Gato g1 = *(Gato*)gato1;
+    Gato g2 = *(Gato*)gato2;
+    return strcmp(g1.nombre, g2.nombre);
 }

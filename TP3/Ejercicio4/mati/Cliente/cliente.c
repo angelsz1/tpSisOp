@@ -5,19 +5,7 @@
 #include <string.h>
 #include <semaphore.h>
 #include <fcntl.h>
-
-typedef struct {
-    char accion[9]; 
-    char nombre[20];
-    char raza[20];
-    char sexo;
-    char condicion[2];
-} Pedido;
-
-typedef struct {
-    int status; 
-    char contenido[2000];
-} Respuesta;
+#include "../global.h"
 
 char* parsearCampo(char* texto, char* campo) {
     char caracteres[20];
@@ -64,22 +52,30 @@ int main()
 
     char texto[200];
 
-    printf("Que accion desea realizar\n");
+    printf("¿Que accion desea realizar?\n");
     printf("ALTA [nombre] [raza] [sexo] [condicion]\n");
     printf("BAJA [nombre]\n");
-    printf("CONSULTA [?nombre]\n");
-
+    printf("CONSULTA [?nombre]\n\n");
+    printf("SALIR\n");
     fgets(texto, 200, stdin);
+    printf("\n");
     parsearPedido(&texto, pedido);
 
-    sem_post(semComando);
-    sem_wait(semRespuesta);
+    while (strcmp(pedido->accion, "SALIR") != 0) {
 
-    if(respuesta->status >= 200 && respuesta->status < 300) {
-        printf("%s\n", respuesta->contenido);
-    } else {
-        printf("%d", respuesta->status);
-        printf("Error. %s\n", respuesta->contenido);
+        sem_post(semComando);
+        sem_wait(semRespuesta);
+
+        if(respuesta->status >= 200 && respuesta->status < 300) {
+            printf("%s\n", respuesta->contenido);
+        } else {
+            printf(ANSI_COLOR_RED"Status code: %d\n", respuesta->status);
+            printf("Error. %s\n" ANSI_COLOR_RESET, respuesta->contenido);
+        }
+
+        printf("\n¿Que accion desea realizar?\n");
+        fgets(texto, 200, stdin);
+        parsearPedido(&texto, pedido);
     }
 
     shmdt(&pedido);
