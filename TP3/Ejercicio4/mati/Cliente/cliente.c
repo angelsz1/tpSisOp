@@ -30,7 +30,7 @@ void parsearPedido(char* texto, Pedido* pedido) {
     texto = parsearCampo(texto, pedido->accion);
     texto = parsearCampo(texto, pedido->nombre);
     texto = parsearCampo(texto, pedido->raza);
-    texto = parsearCampo(texto, &(pedido->sexo));
+    texto = parsearCampo(texto, pedido->sexo);
     texto = parsearCampo(texto, pedido->condicion);
 }
 
@@ -53,10 +53,10 @@ int main()
     char texto[200];
 
     printf("¿Que accion desea realizar?\n");
-    printf("ALTA [nombre] [raza] [sexo] [condicion]\n");
+    printf("ALTA [nombre] [raza] [M/F] [CA/SC]\n");
     printf("BAJA [nombre]\n");
-    printf("CONSULTA [?nombre]\n\n");
-    printf("SALIR\n");
+    printf("CONSULTA [?nombre]\n");
+    printf("SALIR\n\n");
     fgets(texto, 200, stdin);
     printf("\n");
     parsearPedido(&texto, pedido);

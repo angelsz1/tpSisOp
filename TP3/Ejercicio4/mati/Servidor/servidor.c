@@ -25,6 +25,15 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void error(Pedido* pedido, Respuesta* respuesta);
 void atraparSeniales();
 
+void toUpper(char* s) {
+    int i;
+    while(*s != '\0') {
+        if(*s >= 'a' && *s <= 'z') {
+            *s = *s -32;
+      }
+    }
+}
+
 int serverActivo = 1;
 
 int main()
@@ -122,10 +131,29 @@ int crearMemoriaCompartida() {
 }
 
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
+
+    /*toUpper(pedido->sexo);
+    if(strcmp(pedido->sexo, "M") != 0 || strcmp(pedido->sexo, "F") != 0) {
+        //badRequest(pedido, "Sexo invalido", pedido->sexo);
+        respuesta->status = 400;
+        strcpy(respuesta->contenido, "BAD REQUEST: sexo no valido ");
+        strcat(respuesta->contenido, pedido->sexo);
+        return;
+    }
+
+    toUpper(pedido->condicion);
+    if(strcmp(pedido->condicion, "CA") != 0 || strcmp(pedido->condicion, "SC") != 0) {
+        //badRequest(pedido, "Sexo invalido", pedido->sexo);
+        respuesta->status = 400;
+        strcpy(respuesta->contenido, "BAD REQUEST: condicion no valida ");
+        strcat(respuesta->contenido, pedido->condicion);
+        return;
+    }*/
+
     Gato gato;
     strcpy(gato.nombre, pedido->nombre);
     strcpy(gato.raza, pedido->raza);
-    gato.sexo = pedido->sexo;
+    gato.sexo = *(pedido->sexo);
     strcpy(gato.condicion, pedido->condicion);
 
     int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato));
@@ -203,4 +231,4 @@ void atraparSeniales() {
 
 //Validar entrada del usuario
 //Aceptar key insensitive
-//Extraer codigo a otros archivos
+//Atrapar resultado con constantes

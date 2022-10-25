@@ -7,11 +7,11 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 typedef struct {
-    char accion[9]; 
+    char accion[15]; 
     char nombre[20];
     char raza[20];
-    char sexo;
-    char condicion[3];
+    char sexo[10];
+    char condicion[10];
 } Pedido;
 
 typedef struct {
@@ -25,4 +25,5 @@ typedef struct {
     int status; 
     char contenido[2000];
 } Respuesta;
+
 #endif //GLOBAL_H
