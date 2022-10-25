@@ -1,10 +1,10 @@
 all: servidor
 
 servidor: servidor.o 
-	gcc -o servidor servidor.o 
+	gcc -o servidor servidor.o lista.o
 
 servidor.o: servidor.c
-	gcc -c servidor.c
+	gcc -c servidor.c lista.h lista.c
 
 clean:
 	rm	-f *.o
