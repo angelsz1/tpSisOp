@@ -13,16 +13,16 @@
 #define DUPLICADO 2
 
 typedef struct {
-    char accion[20]; 
-    char nombre[20];
-    char raza[20];
-    char sexo[20];
-    char condicion[20];
+    char accion[25]; 
+    char nombre[25];
+    char raza[25];
+    char sexo[2];
+    char condicion[3];
 } Pedido;
 
 typedef struct {
-    char nombre[20];
-    char raza[20];
+    char nombre[25];
+    char raza[25];
     char sexo;
     char condicion[3];
 } Gato;

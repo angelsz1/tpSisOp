@@ -151,11 +151,11 @@ void listarTodos(Lista* lista, void* texto) {
         return;
     }
 
-    sprintf (texto, COLOR_GREEN"|%12s|%12s|%5s|%10s|\n"COLOR_RESET, 
+    sprintf (texto, COLOR_GREEN"|%17s|%17s|%5s|%10s|\n"COLOR_RESET, 
     "Nombre", "Raza", "Sexo", "Condicion");
     while(*lista) {
         memcpy(&gato, (*lista)->elemento, sizeof(Gato));
-        sprintf (aux, "|%12s|%12s|%5c|%10s|\n", 
+        sprintf (aux, "|%17s|%17s|%5c|%10s|\n", 
         gato.nombre, gato.raza, gato.sexo, gato.condicion);
         lista = &(*lista)->siguiente;
         strcat(texto, aux);

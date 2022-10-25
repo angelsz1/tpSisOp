@@ -22,6 +22,12 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void error(Pedido* pedido, Respuesta* respuesta);
 void atraparSeniales();
 void toUpper(char* s);
+int validarAlta(Pedido* pedido, Respuesta* respuesta);
+int validarBaja(Pedido* pedido, Respuesta* respuesta);
+int validarNombre(Pedido* pedido, char* mensaje, int valido);
+int validarRaza(Pedido* pedido, char* mensaje, int valido);
+int validarSexo(Pedido* pedido, char* mensaje, int valido);
+int validarCondicion(Pedido* pedido, char* mensaje, int valido);
 
 int serverActivo = 1;
 
@@ -121,56 +127,48 @@ int crearMemoriaCompartida() {
 
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
 
-    toUpper(pedido->sexo);
-    if(strcmp(pedido->sexo, "M") != 0 && strcmp(pedido->sexo, "F") != 0) {
-        respuesta->status = 400;
-        strcpy(respuesta->contenido, "BAD REQUEST: sexo no valido ");
-        strcat(respuesta->contenido, pedido->sexo);
-        return;
-    }
+    if(validarAlta(pedido, respuesta)) {
+        Gato gato;
+        strcpy(gato.nombre, pedido->nombre);
+        strcpy(gato.raza, pedido->raza);
+        gato.sexo = *(pedido->sexo);
+        strcpy(gato.condicion, pedido->condicion);
 
-    toUpper(pedido->condicion);
-    if(strcmp(pedido->condicion, "CA") != 0 && strcmp(pedido->condicion, "SC") != 0) {
-        respuesta->status = 400;
-        strcpy(respuesta->contenido, "BAD REQUEST: condicion no valida ");
-        strcat(respuesta->contenido, pedido->condicion);
-        return;
-    }
+        int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato));
 
-    Gato gato;
-    strcpy(gato.nombre, pedido->nombre);
-    strcpy(gato.raza, pedido->raza);
-    gato.sexo = *(pedido->sexo);
-    strcpy(gato.condicion, pedido->condicion);
-
-    int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato));
-
-    if(resultado == TODO_OK) {
-        respuesta->status = 200;
-        strcpy(respuesta->contenido, gato.nombre);
-        strcat(respuesta->contenido, " ingresado correctamente");
-    } else if (resultado == DUPLICADO){
-        respuesta->status = 409;
-        strcpy(respuesta->contenido, "CONFLICTO: ");
-        strcat(respuesta->contenido, gato.nombre);
-        strcat(respuesta->contenido, " ya existe");
+        if(resultado == TODO_OK) {
+            respuesta->status = 200;
+            strcpy(respuesta->contenido, gato.nombre);
+            strcat(respuesta->contenido, " ingresado correctamente");
+        } else if (resultado == DUPLICADO){
+            respuesta->status = 409;
+            strcpy(respuesta->contenido, "CONFLICTO: ");
+            strcat(respuesta->contenido, gato.nombre);
+            strcat(respuesta->contenido, " ya existe");
+        }
     }
 }
 
 void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
-    Gato gato;
-    strcpy(gato.nombre, pedido->nombre);
-    int resultado = eliminarDeLista(listaGatos, &gato, sizeof(Gato));
-    if(resultado == ELIMINADO) {
-        respuesta->status = 204;
-        strcpy(respuesta->contenido, gato.nombre);
-        strcat(respuesta->contenido, " eliminado correctamente");
-    } 
-    else if (resultado == NOT_FOUND) {
-        respuesta->status = 404;
-        strcpy(respuesta->contenido, "NOT FOUND: ");
-        strcat(respuesta->contenido, gato.nombre);
-        strcat(respuesta->contenido, " no existe");
+    
+    if(validarBaja(pedido, respuesta)) {
+
+        Gato gato;
+        strcpy(gato.nombre, pedido->nombre);
+
+        int resultado = eliminarDeLista(listaGatos, &gato, sizeof(Gato));
+
+        if(resultado == ELIMINADO) {
+            respuesta->status = 204;
+            strcpy(respuesta->contenido, gato.nombre);
+            strcat(respuesta->contenido, " eliminado correctamente");
+        } 
+        else if (resultado == NOT_FOUND) {
+            respuesta->status = 404;
+            strcpy(respuesta->contenido, "NOT FOUND: ");
+            strcat(respuesta->contenido, gato.nombre);
+            strcat(respuesta->contenido, " no existe");
+        }
     }
 }
 
@@ -188,9 +186,9 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
             char mensaje[200];
             char aux[70];
 
-            sprintf (mensaje, COLOR_GREEN"|%12s|%12s|%5s|%10s|\n"COLOR_RESET, 
+            sprintf (mensaje, COLOR_GREEN"|%17s|%17s|%5s|%10s|\n"COLOR_RESET, 
             "Nombre", "Raza", "Sexo", "Condicion");
-            sprintf (aux, "|%12s|%12s|%5c|%10s|\n", 
+            sprintf (aux, "|%17s|%17s|%5c|%10s|\n", 
             gato.nombre, gato.raza, gato.sexo, gato.condicion);
 
             strcat(mensaje, aux);
@@ -226,3 +224,81 @@ void toUpper(char* s) {
       s++;
     }
 }
+
+int validarAlta(Pedido* pedido, Respuesta* respuesta) {
+    int valido = 1;
+    char mensaje[200] = "";
+
+    valido = validarNombre(pedido, mensaje, valido);
+    valido = validarRaza(pedido, mensaje, valido);
+    valido = validarSexo(pedido, mensaje, valido);
+    valido = validarCondicion(pedido, mensaje, valido);
+
+    if(!valido) {
+        respuesta->status = 400;
+        strcpy(respuesta->contenido, "BAD REQUEST:");
+        strcat(respuesta->contenido, mensaje);
+    }
+
+    return valido;
+}
+
+int validarBaja(Pedido* pedido, Respuesta* respuesta) {
+    int valido = 1;
+    char mensaje[200] = "";
+
+    valido = validarNombre(pedido, mensaje, valido);
+
+    if(!valido) {
+        respuesta->status = 400;
+        strcpy(respuesta->contenido, "BAD REQUEST:");
+        strcat(respuesta->contenido, mensaje);
+    }
+
+    return valido;
+}
+
+int validarNombre(Pedido* pedido, char* mensaje, int valido) {
+    if(strcmp(pedido->nombre, "") == 0) {
+        strcat(mensaje, "\n● El campo nombre es requerido");    
+        valido = 0;
+    }
+    return valido;
+}
+
+int validarRaza(Pedido* pedido, char* mensaje, int valido) {
+    if(strcmp(pedido->raza, "") == 0) {
+        strcat(mensaje, "\n● El campo raza es requerido");    
+        valido = 0;
+    }
+    return valido;
+}
+
+int validarSexo(Pedido* pedido, char* mensaje, int valido) {
+    toUpper(pedido->sexo);
+    if(strcmp(pedido->sexo, "M") != 0 && strcmp(pedido->sexo, "F") != 0) {
+        if(strcmp(pedido->condicion, "") == 0) {
+            strcat(mensaje, "\n● El campo sexo es requerido");    
+        } else {
+            strcat(mensaje, "\n● Sexo no valido: ");
+            strcat(mensaje, pedido->sexo);
+        }
+        valido = 0;
+    }
+    return valido;
+}
+
+int validarCondicion(Pedido* pedido, char* mensaje, int valido) {
+    toUpper(pedido->condicion);
+    if(strcmp(pedido->condicion, "CA") != 0 && strcmp(pedido->condicion, "SC") != 0) {
+        if(strcmp(pedido->condicion, "") == 0) {
+            strcat(mensaje, "\n● El campo condicion es requerido");    
+        } else {
+            strcat(mensaje, "\n● Condicion no valida: ");
+            strcat(mensaje, pedido->condicion);
+        }
+        valido = 0;
+    }
+    return valido;
+}
+
