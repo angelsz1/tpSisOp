@@ -7,9 +7,9 @@ back:
 	cd ..
 
 servidor:
-	cd Servidor; make
+	cd Servidor && make
 
 clean:
-	cd Cliente; make cleanall
+	cd Cliente && make cleanall
 	cd ..
-	cd Servidor; make cleanall
+	cd Servidor && make cleanall
