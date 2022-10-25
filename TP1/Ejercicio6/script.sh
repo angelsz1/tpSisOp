@@ -334,5 +334,3 @@ fi
 
 zipHandler
 
-
-#TODO: replicar lo de recuperar en el resto de recuperar y en borrar (mejor si es en una funcion aparte)
