@@ -8,7 +8,7 @@
 #include "../global.h"
 
 char* parsearCampo(char* texto, char* campo) {
-    char caracteres[20];
+    char caracteres[200];
     int i = 0;
 
     while(*texto != ' ' && *texto != '\0' && *texto != '\n') {
@@ -21,17 +21,33 @@ char* parsearCampo(char* texto, char* campo) {
         texto++;
 
     caracteres[i] = '\0';
-    strcpy(campo, caracteres);
+
+    if(i<20) {
+        strcpy(campo, caracteres);
+    }  
+    else {
+        printf(COLOR_YELLOW"Los campos no pueden contener mas de 20 caracteres\n"COLOR_RESET);
+        strcpy(campo, "error");
+    }
 
     return texto;
 }
 
-void parsearPedido(char* texto, Pedido* pedido) {
+int parsearPedido(char* texto, Pedido* pedido) {
     texto = parsearCampo(texto, pedido->accion);
     texto = parsearCampo(texto, pedido->nombre);
     texto = parsearCampo(texto, pedido->raza);
     texto = parsearCampo(texto, pedido->sexo);
     texto = parsearCampo(texto, pedido->condicion);
+
+    if(strcmp(pedido->accion, "error") == 0 || 
+        strcmp(pedido->nombre, "error") == 0 || 
+        strcmp(pedido->raza, "error") == 0 || 
+        strcmp(pedido->sexo, "error") == 0 ||
+        strcmp(pedido->condicion, "error") == 0)
+        return 0;
+    
+    return 1;
 }
 
 int main()
@@ -59,23 +75,26 @@ int main()
     printf("SALIR\n\n");
     fgets(texto, 200, stdin);
     printf("\n");
-    parsearPedido(&texto, pedido);
-
+    int resultado = parsearPedido(&texto, pedido);
     while (strcmp(pedido->accion, "SALIR") != 0) {
+        if(resultado == TODO_OK) {
+            sem_post(semComando);
+            sem_wait(semRespuesta);
 
-        sem_post(semComando);
-        sem_wait(semRespuesta);
-
-        if(respuesta->status >= 200 && respuesta->status < 300) {
-            printf("%s\n", respuesta->contenido);
+            if(respuesta->status >= 200 && respuesta->status < 300) {
+                printf("%s\n", respuesta->contenido);
+            } else {
+                printf(COLOR_RED"Status code: %d\n", respuesta->status);
+                printf("%s\n" COLOR_RESET, respuesta->contenido);
+            }
+            printf("\n¿Que accion desea realizar?\n");
+            fgets(texto, 200, stdin);
         } else {
-            printf(COLOR_RED"Status code: %d\n", respuesta->status);
-            printf("Error. %s\n" COLOR_RESET, respuesta->contenido);
+            printf("Por favor, intente nuevamente\n");
+            fgets(texto, 200, stdin);
         }
-
-        printf("\n¿Que accion desea realizar?\n");
-        fgets(texto, 200, stdin);
-        parsearPedido(&texto, pedido);
+        
+        int resultado = parsearPedido(&texto, pedido);
     }
 
     shmdt(&pedido);

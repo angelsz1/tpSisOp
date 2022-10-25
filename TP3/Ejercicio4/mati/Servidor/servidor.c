@@ -11,9 +11,6 @@
 #include <signal.h>
 #include "../global.h"
 
-#define ELIMINADO 1
-#define NOT_FOUND 0
-
 void crearServidor();
 void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos);
 void signalHandler(int signal);
@@ -24,15 +21,7 @@ void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void error(Pedido* pedido, Respuesta* respuesta);
 void atraparSeniales();
-
-void toUpper(char* s) {
-    while(*s != '\0') {
-        if(*s >= 'a' && *s <= 'z') {
-            *s = *s -32;
-        }
-      s++;
-    }
-}
+void toUpper(char* s);
 
 int serverActivo = 1;
 
@@ -49,7 +38,6 @@ int main()
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
-        printf("Error creando el semaforo");
         exit(-1);
     }
 
@@ -60,8 +48,10 @@ int main()
     while (serverActivo)
     {
         sem_wait(semComando);
+
         toUpper(pedido->accion);
         toUpper(pedido->nombre);
+
         if(strcmp("ALTA", pedido->accion) == 0)
             alta(&listaGatos, pedido, respuesta);
 
@@ -83,19 +73,17 @@ int main()
 }
 
 void crearServidor() {
-    pid_t process_id = 0;
+    pid_t process_id = fork();
 
-    process_id = fork();
-
-    if(process_id < 0) {
-        printf("fork failed!\n");
+    if(process_id < 0)
         exit(1);
-    }
 
     if (process_id > 0) {
         printf("process_id of child process %d \n", process_id);
         exit(0);
     }
+    FILE* archivoGatos = fopen("gatos", "a");
+    fclose(archivoGatos);
 }
 
 void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos) {
@@ -157,13 +145,14 @@ void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
 
     int resultado = insertarEnListaOrdenada(listaGatos, &gato, sizeof(Gato));
 
-    if(resultado == 1) {
+    if(resultado == TODO_OK) {
         respuesta->status = 200;
         strcpy(respuesta->contenido, gato.nombre);
         strcat(respuesta->contenido, " ingresado correctamente");
-    } else if (resultado == 2){
+    } else if (resultado == DUPLICADO){
         respuesta->status = 409;
-        strcpy(respuesta->contenido, gato.nombre);
+        strcpy(respuesta->contenido, "CONFLICTO: ");
+        strcat(respuesta->contenido, gato.nombre);
         strcat(respuesta->contenido, " ya existe");
     }
 }
@@ -179,7 +168,8 @@ void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
     } 
     else if (resultado == NOT_FOUND) {
         respuesta->status = 404;
-        strcpy(respuesta->contenido, gato.nombre);
+        strcpy(respuesta->contenido, "NOT FOUND: ");
+        strcat(respuesta->contenido, gato.nombre);
         strcat(respuesta->contenido, " no existe");
     }
 }
@@ -228,6 +218,11 @@ void atraparSeniales() {
         printf("No se pudo capturar la senal SIGUSR1\n");
 }
 
-//Validar entrada del usuario
-//Aceptar key insensitive
-//Atrapar resultado con constantes
+void toUpper(char* s) {
+    while(*s != '\0') {
+        if(*s >= 'a' && *s <= 'z') {
+            *s = *s -32;
+        }
+      s++;
+    }
+}
