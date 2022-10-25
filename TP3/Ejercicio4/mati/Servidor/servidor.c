@@ -26,11 +26,11 @@ void error(Pedido* pedido, Respuesta* respuesta);
 void atraparSeniales();
 
 void toUpper(char* s) {
-    int i;
     while(*s != '\0') {
         if(*s >= 'a' && *s <= 'z') {
             *s = *s -32;
-      }
+        }
+      s++;
     }
 }
 
@@ -60,7 +60,8 @@ int main()
     while (serverActivo)
     {
         sem_wait(semComando);
-
+        toUpper(pedido->accion);
+        toUpper(pedido->nombre);
         if(strcmp("ALTA", pedido->accion) == 0)
             alta(&listaGatos, pedido, respuesta);
 
@@ -132,9 +133,8 @@ int crearMemoriaCompartida() {
 
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
 
-    /*toUpper(pedido->sexo);
-    if(strcmp(pedido->sexo, "M") != 0 || strcmp(pedido->sexo, "F") != 0) {
-        //badRequest(pedido, "Sexo invalido", pedido->sexo);
+    toUpper(pedido->sexo);
+    if(strcmp(pedido->sexo, "M") != 0 && strcmp(pedido->sexo, "F") != 0) {
         respuesta->status = 400;
         strcpy(respuesta->contenido, "BAD REQUEST: sexo no valido ");
         strcat(respuesta->contenido, pedido->sexo);
@@ -142,13 +142,12 @@ void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
     }
 
     toUpper(pedido->condicion);
-    if(strcmp(pedido->condicion, "CA") != 0 || strcmp(pedido->condicion, "SC") != 0) {
-        //badRequest(pedido, "Sexo invalido", pedido->sexo);
+    if(strcmp(pedido->condicion, "CA") != 0 && strcmp(pedido->condicion, "SC") != 0) {
         respuesta->status = 400;
         strcpy(respuesta->contenido, "BAD REQUEST: condicion no valida ");
         strcat(respuesta->contenido, pedido->condicion);
         return;
-    }*/
+    }
 
     Gato gato;
     strcpy(gato.nombre, pedido->nombre);
@@ -199,8 +198,8 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
             char mensaje[200];
             char aux[70];
 
-            sprintf (mensaje, ANSI_COLOR_GREEN"|%12s|%12s|%5s|%10s|\n", 
-            "Nombre", "Raza", "Sexo", "Condicion"ANSI_COLOR_RESET);
+            sprintf (mensaje, COLOR_GREEN"|%12s|%12s|%5s|%10s|\n"COLOR_RESET, 
+            "Nombre", "Raza", "Sexo", "Condicion");
             sprintf (aux, "|%12s|%12s|%5c|%10s|\n", 
             gato.nombre, gato.raza, gato.sexo, gato.condicion);
 

@@ -69,8 +69,8 @@ int main()
         if(respuesta->status >= 200 && respuesta->status < 300) {
             printf("%s\n", respuesta->contenido);
         } else {
-            printf(ANSI_COLOR_RED"Status code: %d\n", respuesta->status);
-            printf("Error. %s\n" ANSI_COLOR_RESET, respuesta->contenido);
+            printf(COLOR_RED"Status code: %d\n", respuesta->status);
+            printf("Error. %s\n" COLOR_RESET, respuesta->contenido);
         }
 
         printf("\n¿Que accion desea realizar?\n");
