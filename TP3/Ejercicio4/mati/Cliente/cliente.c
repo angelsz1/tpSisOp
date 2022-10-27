@@ -69,7 +69,7 @@ int crearMemoriaCompartida() {
     int shmid = shmget(key, sizeof(int), 0666);
 
     if (shmid == -1) {
-        printf(YELLOW"Hubo un error al intentar abrir el área de memoria compartida."YELLOW);
+        printf(YELLOW"Hubo un error al intentar abrir el área de memoria compartida.\n"YELLOW);
         exit(1);
     }
 
