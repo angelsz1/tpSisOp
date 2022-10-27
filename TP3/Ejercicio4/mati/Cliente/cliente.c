@@ -7,56 +7,60 @@
 #include <fcntl.h>
 #include "../global.h"
 
-char* parsearCampo(char* texto, char* campo, char* nombreCampo, int maxCaracteres);
-int parsearPedido(char* texto, Pedido* pedido);
 int crearMemoriaCompartida();
 void toUpper(char* s);
+void ayuda();
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc > 2) {
+        printf("./cliente no soporta %d parametros", argc);
+        return 0;
+    }
+
+    if(argc == 2) {
+        if (strcmp(argv[1],"-help") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+            ayuda();
+            return 0;
+        } else {
+            printf(YELLOW"Argumento invalido: %s"RESET, argv[1]);
+        }
+    }
+
     sem_t* semComando = sem_open("/comando", O_CREAT, 0666, 0);
     sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
-        printf(COLOR_RED"Error abriendo los semaforos"COLOR_RESET);
+        printf(RED"Error abriendo los semaforos"RESET);
         exit(-1);
     }
 
     int shmid = crearMemoriaCompartida();
-    Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
+    char* pedido = (char*)shmat(shmid,NULL,0);
     Respuesta* respuesta = (Respuesta*)shmat(shmid,NULL,0);
-
-    char texto[200];
 
     printf("¿Que accion desea realizar?\n");
     printf("ALTA [nombre] [raza] [M/F] [CA/SC]\n");
     printf("BAJA [nombre]\n");
     printf("CONSULTA [?nombre]\n");
     printf("SALIR\n\n");
-    fgets(texto, 200, stdin);
-    
-    int resultado = parsearPedido(&texto, pedido);
+    fgets(pedido, 200, stdin);
+    toUpper(pedido);
 
-    while (strcmp(pedido->accion, "SALIR") != 0) {
-        if(resultado == TODO_OK) {
-            sem_post(semComando);
-            sem_wait(semRespuesta);
+    while (strcmp(pedido, "SALIR") != 0) {
+        sem_post(semComando);
+        sem_wait(semRespuesta);
 
-            if(respuesta->status >= 200 && respuesta->status < 300) {
-                printf("%s\n", respuesta->contenido);
-            } else {
-                printf(COLOR_RED"Status code: %d\n", respuesta->status);
-                printf("%s\n" COLOR_RESET, respuesta->contenido);
-            }
-            printf("\n¿Que accion desea realizar?\n");
-            fgets(texto, 200, stdin);
+        if(respuesta->status >= 200 && respuesta->status < 300) {
+            printf("%s\n", respuesta->contenido);
         } else {
-            printf("Por favor, intente nuevamente\n");
-            fgets(texto, 200, stdin);
+            printf(RED"Status code: %d\n", respuesta->status);
+            printf("%s\n" RESET, respuesta->contenido);
         }
-        
-        int resultado = parsearPedido(&texto, pedido);
+        printf("\n¿Que accion desea realizar?\n");
+        fgets(pedido, 200, stdin);
+        toUpper(pedido);
     }
 
     shmdt(&pedido);
@@ -67,55 +71,6 @@ int main()
     sem_close(semRespuesta);
 
     return 0;
-}
-
-
-char* parsearCampo(char* texto, char* campo, char* nombreCampo, int maxCaracteres) {
-    char caracteres[maxCaracteres];
-    int i = 0;
-
-    while(*texto != ' ' && *texto != '\0' && *texto != '\n') {
-        caracteres[i] = *texto;
-        i++;
-        texto++;
-    }
-
-    if(*texto != '\0')
-        texto++;
-
-    caracteres[i] = '\0';
-
-    if(i<=maxCaracteres) {
-        strcpy(campo, caracteres);
-    }  
-    else {
-        if(maxCaracteres > 1) {
-            printf(COLOR_YELLOW"El campo %s no puede contener mas de %d caracteres\n"COLOR_RESET, nombreCampo, maxCaracteres);
-        } else 
-            printf(COLOR_YELLOW"El campo %s no pueden contener mas de %d caracter\n"COLOR_RESET, nombreCampo, maxCaracteres);
-        strcpy(campo, "?");
-    }
-
-    return texto;
-}
-
-int parsearPedido(char* texto, Pedido* pedido) {
-    texto = parsearCampo(texto, pedido->accion, "accion", 25);
-    texto = parsearCampo(texto, pedido->nombre, "nombre", 25);
-    texto = parsearCampo(texto, pedido->raza, "raza", 25);
-    texto = parsearCampo(texto, &(pedido->sexo), "sexo", 1);
-    texto = parsearCampo(texto, pedido->condicion, "condicion", 2);
-
-    toUpper(pedido->accion);
-
-    if(strcmp(pedido->accion, "?") == 0 || 
-        strcmp(pedido->nombre, "?") == 0 || 
-        strcmp(pedido->raza, "?") == 0 || 
-        strcmp(&(pedido->sexo), "?") == 0 ||
-        strcmp(pedido->condicion, "?") == 0)
-        return 0;
-    
-    return 1;
 }
 
 int crearMemoriaCompartida() {
@@ -132,10 +87,44 @@ int crearMemoriaCompartida() {
 }
 
 void toUpper(char* s) {
-    while(*s != '\0') {
+    while(*s != '\0' && *s !='\n') {
         if(*s >= 'a' && *s <= 'z') {
             *s = *s -32;
         }
       s++;
     }
+    if(*s == '\n') {
+        *s = '\0';
+    }
+}
+
+void ayuda() {
+    puts("Con este script podras solicitar informacion al servidor del refugio de gatos");
+    puts("Para solicitar informacion usted debera invocar al script de la siguiente forma:");
+    puts("./Cliente");
+    puts("El cliente acepta las siguientes acciones");
+    puts(CYAN"- ALTA:"RESET);
+    printf("\t● ALTA ");
+    printf(GREEN"[nombre] [raza] [sexo] [condicion]\n"RESET);
+    puts(CYAN"- BAJA:"RESET);
+    printf("\t● BAJA ");
+    printf(GREEN"[nombre]\n"RESET);
+    puts(CYAN"- CONSULTA:"RESET);
+    puts("\t● CONSULTA");
+    printf("\t● CONSULTA ");
+    printf(GREEN"[nombre]\n"RESET);
+    puts("Referencias:");
+    printf(GREEN"[nombre]\t"RESET);
+    printf("Nombre del gato (MAXIMO 25 CARACTERES)\n");
+    printf(GREEN"[raza]\t"RESET);
+    printf("Raza del gato (MAXIMO 25 CARACTERES)\n");
+    printf(GREEN"[sexo]\t"RESET);
+    printf("Sexo del gato (M o F) (SE DEBE COLOCAR UN SOLO CARACTER)\n");
+    printf(GREEN"[condicion]\t"RESET);
+    printf("Castrado (CA) o Sin Castrar (SC) (SE DEBEN COLOCAR SOLO 2 CARACTERES)\n");
+    puts("Aclaraciones:");
+    puts("La consulta sin parametros te mostrara el registro completo de gatos que se encuentran en el refugio");
+    puts("La consulta que lleva el parametro [nombre] te mostrara la informacion del gato buscado si es que existe");    
+    puts("------------------------------------------------------------------------");
+
 }

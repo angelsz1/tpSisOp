@@ -2,10 +2,11 @@
 #define GLOBAL_H
 #include <stddef.h>
 
-#define COLOR_RED     "\x1b[31m"
-#define COLOR_GREEN   "\x1b[32m"
-#define COLOR_YELLOW  "\x1b[33m"
-#define COLOR_RESET   "\x1b[0m"
+#define RED     "\x1b[31m"
+#define GREEN   "\x1b[32m"
+#define YELLOW  "\x1b[33m"
+#define CYAN     "\x1b[36m"
+#define RESET   "\x1b[0m"
 
 #define TODO_OK 1
 #define ELIMINADO 1

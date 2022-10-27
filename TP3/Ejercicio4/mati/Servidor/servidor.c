@@ -12,14 +12,14 @@
 #include "../global.h"
 
 void crearServidor();
-void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos);
+void cerrarServidor(char* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos);
 void signalHandler(int signal);
 int crearMemoriaCompartida();
 
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
-void error(Pedido* pedido, Respuesta* respuesta);
+void accionInvalida(Pedido* pedido, Respuesta* respuesta);
 void atraparSeniales();
 void toUpper(char* s);
 int validarAlta(Pedido* pedido, Respuesta* respuesta);
@@ -28,6 +28,8 @@ int validarNombre(Pedido* pedido, char* mensaje, int valido);
 int validarRaza(Pedido* pedido, char* mensaje, int valido);
 int validarSexo(Pedido* pedido, char* mensaje, int valido);
 int validarCondicion(Pedido* pedido, char* mensaje, int valido);
+char* parsearCampo(char* texto, char* campo, char* nombreCampo, int maxCaracteres, char* error);
+int parsearPedido(char* texto, Pedido* pedido, char* error);
 
 int serverActivo = 1;
 
@@ -48,32 +50,38 @@ int main()
     }
 
     int shmid = crearMemoriaCompartida();
-    Pedido* pedido = (Pedido*)shmat(shmid,NULL,0);
+    char* texto = (char*)shmat(shmid,NULL,0);
     Respuesta* respuesta = (Respuesta*)shmat(shmid,NULL,0);
+    Pedido pedido;
    
     while (serverActivo)
     {
         sem_wait(semComando);
+        char mensajeError[200];
+        strcpy(mensajeError, "");
+        int parseoValido = parsearPedido(texto, &pedido, mensajeError);
+        if(parseoValido) {
+            if(strcmp("ALTA", pedido.accion) == 0)
+                alta(&listaGatos, &pedido, respuesta);
 
-        toUpper(pedido->accion);
-        toUpper(pedido->nombre);
+            else if(strcmp("BAJA", pedido.accion) == 0)
+                baja(&listaGatos, &pedido, respuesta);
 
-        if(strcmp("ALTA", pedido->accion) == 0)
-            alta(&listaGatos, pedido, respuesta);
+            else if(strcmp("CONSULTA", pedido.accion) == 0)
+                consulta(&listaGatos, &pedido, respuesta);
+            
+            else
+                accionInvalida(&pedido, respuesta);
 
-        else if(strcmp("BAJA", pedido->accion) == 0)
-            baja(&listaGatos, pedido, respuesta);
-
-        else if(strcmp("CONSULTA", pedido->accion) == 0)
-            consulta(&listaGatos, pedido, respuesta);
-        
-        else
-            error(pedido, respuesta);
-
+        } else {
+            respuesta->status = 400;
+            strcpy(respuesta->contenido,  YELLOW"BAD REQUEST:\n"RESET);
+            strcat(respuesta->contenido, mensajeError);
+        }
         sem_post(semRespuesta);
     }
 
-    cerrarServidor(pedido, respuesta, shmid, semComando, semRespuesta,  &listaGatos);
+    cerrarServidor(texto, respuesta, shmid, semComando, semRespuesta,  &listaGatos);
 
     return 0;
 }
@@ -92,7 +100,7 @@ void crearServidor() {
     fclose(archivoGatos);
 }
 
-void cerrarServidor(Pedido* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos) {
+void cerrarServidor(char* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos) {
     shmdt(&pedido);
     shmdt(&respuesta);
     shmctl(shmid, IPC_RMID, NULL);
@@ -186,7 +194,7 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
             char mensaje[200];
             char aux[70];
 
-            sprintf (mensaje, COLOR_GREEN"|%17s|%17s|%5s|%10s|\n"COLOR_RESET, 
+            sprintf (mensaje, GREEN"|%17s|%17s|%5s|%10s|\n"RESET, 
             "Nombre", "Raza", "Sexo", "Condicion");
             sprintf (aux, "|%17s|%17s|%5c|%10s|\n", 
             gato.nombre, gato.raza, gato.sexo, gato.condicion);
@@ -201,7 +209,7 @@ void consulta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta) {
     }
 }
 
-void error(Pedido* pedido, Respuesta* respuesta) {
+void accionInvalida(Pedido* pedido, Respuesta* respuesta) {
     char accion[9];
     strcpy(accion, pedido->accion);
     respuesta->status = 400;
@@ -302,3 +310,56 @@ int validarCondicion(Pedido* pedido, char* mensaje, int valido) {
     return valido;
 }
 
+char* parsearCampo(char* texto, char* campo, char* nombreCampo, int maxCaracteres, char* error) {
+    char caracteres[200];
+    int i = 0;
+
+    while(*texto != ' ' && *texto != '\0' && *texto != '\n') {
+        caracteres[i] = *texto;
+        i++;
+        texto++;
+    }
+
+    if(*texto != '\0')
+        texto++;
+
+    caracteres[i] = '\0';
+
+    if(i<=maxCaracteres) {
+        strcpy(campo, caracteres);
+    }
+    else {
+        char aux[200];
+        if(maxCaracteres > 1) {
+            sprintf (aux, YELLOW"● El campo %s no puede contener mas de %d caracteres\n"RESET, nombreCampo, maxCaracteres); 
+            strcat(error, aux);
+        } else {
+            sprintf(aux, YELLOW"● El campo %s no pueden contener mas de %d caracter\n"RESET, nombreCampo, maxCaracteres);
+            strcat(error, aux);
+        }
+        strcpy(campo, "?");
+    }
+
+    return texto;
+}
+
+int parsearPedido(char* texto, Pedido* pedido, char* error) {
+    texto = parsearCampo(texto, pedido->accion, "accion", 25, error);
+    texto = parsearCampo(texto, pedido->nombre, "nombre", 25, error);
+    texto = parsearCampo(texto, pedido->raza, "raza", 25, error);
+    texto = parsearCampo(texto, pedido->sexo, "sexo", 1, error);
+    texto = parsearCampo(texto, pedido->condicion, "condicion", 2, error);
+
+    toUpper(pedido->accion);
+    toUpper(pedido->nombre);
+    toUpper(pedido->raza);
+
+    if(strcmp(pedido->accion, "?") == 0 || 
+        strcmp(pedido->nombre, "?") == 0 || 
+        strcmp(pedido->raza, "?") == 0 || 
+        strcmp(pedido->sexo, "?") == 0 ||
+        strcmp(pedido->condicion, "?") == 0)
+        return 0;
+    
+    return 1;
+}

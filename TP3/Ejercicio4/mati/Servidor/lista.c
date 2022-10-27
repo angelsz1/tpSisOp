@@ -151,7 +151,7 @@ void listarTodos(Lista* lista, void* texto) {
         return;
     }
 
-    sprintf (texto, COLOR_GREEN"|%17s|%17s|%5s|%10s|\n"COLOR_RESET, 
+    sprintf (texto, GREEN"|%17s|%17s|%5s|%10s|\n"RESET, 
     "Nombre", "Raza", "Sexo", "Condicion");
     while(*lista) {
         memcpy(&gato, (*lista)->elemento, sizeof(Gato));
