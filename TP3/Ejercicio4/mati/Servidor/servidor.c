@@ -35,19 +35,20 @@ int serverActivo = 1;
 
 int main()
 {
-    crearServidor();
-    atraparSeniales();
-
-    Lista listaGatos;
-    crearLista(&listaGatos);    
-
-    sem_t* semComando = sem_open("/comando", O_CREAT, 0666, 0);
-    sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
+    sem_t* semComando = sem_open("/comando", O_CREAT | O_EXCL, 0666, 0);
+    sem_t* semRespuesta = sem_open("/respuesta", O_CREAT | O_EXCL, 0666, 0);
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
+        printf(YELLOW"El servidor ya se encuentra activo\n"RESET);
         exit(-1);
     }
+
+    crearServidor();
+    atraparSeniales();
+    
+    Lista listaGatos;
+    crearLista(&listaGatos);
 
     int shmid = crearMemoriaCompartida();
     char* texto = (char*)shmat(shmid,NULL,0);
@@ -331,10 +332,10 @@ char* parsearCampo(char* texto, char* campo, char* nombreCampo, int maxCaractere
     else {
         char aux[200];
         if(maxCaracteres > 1) {
-            sprintf (aux, YELLOW"● El campo %s no puede contener mas de %d caracteres\n"RESET, nombreCampo, maxCaracteres); 
+            sprintf (aux, "● El campo %s no puede contener mas de %d caracteres\n", nombreCampo, maxCaracteres); 
             strcat(error, aux);
         } else {
-            sprintf(aux, YELLOW"● El campo %s no pueden contener mas de %d caracter\n"RESET, nombreCampo, maxCaracteres);
+            sprintf(aux, "● El campo %s no pueden contener mas de %d caracter\n", nombreCampo, maxCaracteres);
             strcat(error, aux);
         }
         strcpy(campo, "?");

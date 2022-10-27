@@ -10,29 +10,19 @@
 int crearMemoriaCompartida();
 void toUpper(char* s);
 void ayuda();
+void validarParametros(int cantidadParametros, char* parametros[]);
 
 int main(int argc, char* argv[])
 {
-    if (argc > 2) {
-        printf("./cliente no soporta %d parametros", argc);
-        return 0;
-    }
+    validarParametros(argc, argv);
 
-    if(argc == 2) {
-        if (strcmp(argv[1],"-help") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
-            ayuda();
-            return 0;
-        } else {
-            printf(YELLOW"Argumento invalido: %s"RESET, argv[1]);
-        }
-    }
-
-    sem_t* semComando = sem_open("/comando", O_CREAT, 0666, 0);
-    sem_t* semRespuesta = sem_open("/respuesta", O_CREAT, 0666, 0);
+    sem_t* semComando = sem_open("/comando", 0666, 0);
+    sem_t* semRespuesta = sem_open("/respuesta", 0666, 0);
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
-        printf(RED"Error abriendo los semaforos"RESET);
+        printf(RED"STATUS CODE: 503\n");
+        printf(RED"El server no se encuentra activo\n"RESET);
         exit(-1);
     }
 
@@ -76,10 +66,10 @@ int main(int argc, char* argv[])
 int crearMemoriaCompartida() {
     char* clave = "../refugio";
     key_t key = ftok(clave, 4);
-    int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
+    int shmid = shmget(key, sizeof(int), 0666);
 
     if (shmid == -1) {
-        printf("Hubo un error al intentar abrir el área de memoria compartida.");
+        printf(YELLOW"Hubo un error al intentar abrir el área de memoria compartida."YELLOW);
         exit(1);
     }
 
@@ -98,11 +88,30 @@ void toUpper(char* s) {
     }
 }
 
+void validarParametros(int cantidadParametros, char* parametros[]) {
+    if (cantidadParametros > 2) {
+        printf("./cliente no soporta %d parametros", cantidadParametros);
+        exit(0);
+    }
+
+    if(cantidadParametros == 2) {
+        if (strcmp(parametros[1],"-help") == 0 || strcmp(parametros[1], "-h") == 0 || strcmp(parametros[1], "--help") == 0) {
+            ayuda();
+            exit(1);
+        } else {
+            printf(YELLOW"Argumento invalido: %s\n"RESET, parametros[1]);
+            exit(0);
+        }
+    }
+}
+
 void ayuda() {
-    puts("Con este script podras solicitar informacion al servidor del refugio de gatos");
+    puts(YELLOW"\nDESCRIPCION"RESET);
+    puts("Con este script podras solicitar informacion al servidor del refugio de gatos\n");
+    puts(YELLOW"USO"RESET);
     puts("Para solicitar informacion usted debera invocar al script de la siguiente forma:");
-    puts("./Cliente");
-    puts("El cliente acepta las siguientes acciones");
+    puts("./Cliente\n");
+    puts("El cliente acepta las siguientes acciones:\n");
     puts(CYAN"- ALTA:"RESET);
     printf("\t● ALTA ");
     printf(GREEN"[nombre] [raza] [sexo] [condicion]\n"RESET);
@@ -113,18 +122,18 @@ void ayuda() {
     puts("\t● CONSULTA");
     printf("\t● CONSULTA ");
     printf(GREEN"[nombre]\n"RESET);
-    puts("Referencias:");
+    puts(CYAN"- SALIR\n"RESET);
+    puts(YELLOW"PARAMETROS"RESET);
     printf(GREEN"[nombre]\t"RESET);
     printf("Nombre del gato (MAXIMO 25 CARACTERES)\n");
-    printf(GREEN"[raza]\t"RESET);
+    printf(GREEN"[raza]\t\t"RESET);
     printf("Raza del gato (MAXIMO 25 CARACTERES)\n");
-    printf(GREEN"[sexo]\t"RESET);
+    printf(GREEN"[sexo]\t\t"RESET);
     printf("Sexo del gato (M o F) (SE DEBE COLOCAR UN SOLO CARACTER)\n");
     printf(GREEN"[condicion]\t"RESET);
-    printf("Castrado (CA) o Sin Castrar (SC) (SE DEBEN COLOCAR SOLO 2 CARACTERES)\n");
-    puts("Aclaraciones:");
+    printf("Castrado (CA) o Sin Castrar (SC) (SE DEBEN COLOCAR SOLO 2 CARACTERES)\n\n");
+    puts(YELLOW"ACLARACIONES:"RESET);
     puts("La consulta sin parametros te mostrara el registro completo de gatos que se encuentran en el refugio");
     puts("La consulta que lleva el parametro [nombre] te mostrara la informacion del gato buscado si es que existe");    
     puts("------------------------------------------------------------------------");
-
 }
