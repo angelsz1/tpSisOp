@@ -10,5 +10,5 @@ clean:
 	rm	-f *.o
 
 cleanall:
-	rm	-f *.o servidor
+	rm	-f *.o servidor lista.h.gch
 
