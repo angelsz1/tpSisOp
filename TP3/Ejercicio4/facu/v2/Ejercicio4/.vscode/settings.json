@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "shared_memory.h": "c",
-        "stdlib.h": "c"
-    }
-}

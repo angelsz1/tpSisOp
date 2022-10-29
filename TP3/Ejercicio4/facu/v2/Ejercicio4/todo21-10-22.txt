@@ -1,2 +1,0 @@
-Hacer que la pagina principal cargue primero solamente lo que necesita
-Y que luego cada componente cargue la info que requiere a medida que el usuario la pide
