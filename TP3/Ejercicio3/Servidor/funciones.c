@@ -14,8 +14,8 @@ int mostrarStockProducto(int id, char *textoServidor, char *path)
     FILE *file = fopen(path, "r");
     if (file == NULL)
     {
-        printf("Error opening file");
-        return 1;
+        printf("Error abriendo archivo");
+        exit(1);
     }
 
     char line[1000];
@@ -44,8 +44,8 @@ int mostrarProductosSinStock(char *textoServidor, char *path)
     FILE *file = fopen(path, "r");
     if (file == NULL)
     {
-        printf("Error opening file");
-        return 1;
+        printf("Error abriendo archivo");
+        exit(1);
     }
 
     char line[1000];
@@ -73,8 +73,8 @@ int mostrarCostoReposicion(int cantidadAReponer, char *textoServidor, char *path
     FILE *file = fopen(path, "r");
     if (file == NULL)
     {
-        printf("Error opening file");
-        return 1;
+        printf("Error abriendo archivo");
+        exit(1);
     }
 
     char line[1000];
@@ -103,8 +103,8 @@ int mostrarListaProductos(char *textoServidor, char *path)
     FILE *file = fopen(path, "r");
     if (file == NULL)
     {
-        printf("Error opening file");
-        return 1;
+        printf("Error abriendo archivo");
+        exit(1);
     }
 
     char line[1000];
