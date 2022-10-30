@@ -1,14 +1,20 @@
-/*standard symbols */
+// #APL N. 3
+// #EJERCICIO 3
+// #INTEGRANTES:
+//       #Carballo, Facundo Nicolas (DNI: 42774931)
+//       #Garcia Burgio, Matias Nicolas (DNI: 42649117)
+//       #Mottura, Agostina Micaela (DNI: 41898101)
+//       #Povoli Olivera, Victor (DNI: 43103780)
+//       #Szust, Ángel Elías (DNI: 43098495)
+
 #include <unistd.h>
 
-/* sockets */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-/* strings / errors*/
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
