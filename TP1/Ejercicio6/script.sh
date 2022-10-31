@@ -268,7 +268,7 @@ fi
 #las opciones son --listar, --vaciar, --recuperar, --eliminar, --borrar
 
 if ! [[ $1 = "--listar" || $1 = "--vaciar" || $1 = "--recuperar" || $1 = "--eliminar" || $1 = "--borrar" ]]; then
-    echo "Opcion invalida" >> script.log
+    echo "Opcion invalida" 
     zipHandler
     exit 1
 fi
