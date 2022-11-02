@@ -41,11 +41,13 @@ char* parsearCampo(char* texto, char* campo, char* nombreCampo, int maxCaractere
 int parsearPedido(char* texto, Pedido* pedido, char* error);
 
 int serverActivo = 1;
+sem_t* semComando;
+sem_t* semRespuesta;
 
 int main()
 {
-    sem_t* semComando = sem_open("/comando", O_CREAT | O_EXCL, 0666, 0);
-    sem_t* semRespuesta = sem_open("/respuesta", O_CREAT | O_EXCL, 0666, 0);
+    semComando = sem_open("/comando", O_CREAT | O_EXCL, 0666, 0);
+    semRespuesta = sem_open("/respuesta", O_CREAT | O_EXCL, 0666, 0);
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
@@ -127,6 +129,7 @@ void signalHandler(int signal)
 {
     if (signal == SIGUSR1) {
         serverActivo = 0;
+        sem_post(semComando);
     }
 }
 

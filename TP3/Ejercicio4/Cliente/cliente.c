@@ -64,7 +64,6 @@ int main(int argc, char* argv[])
 
     shmdt(&pedido);
     shmdt(&respuesta);
-    shmctl(shmid, IPC_RMID, NULL);
 
     sem_close(semComando);
     sem_close(semRespuesta);
@@ -78,7 +77,7 @@ int crearMemoriaCompartida() {
     int shmid = shmget(key, sizeof(int), 0666);
 
     if (shmid == -1) {
-        printf(YELLOW"Hubo un error al intentar abrir el área de memoria compartida.\n"YELLOW);
+        printf(YELLOW"Hubo un error al intentar abrir el área de memoria compartida.\n"RESET);
         exit(1);
     }
 
@@ -109,7 +108,7 @@ void validarParametros(int cantidadParametros, char* parametros[]) {
             exit(1);
         } else {
             printf(YELLOW"Argumento invalido: %s\n"RESET, parametros[1]);
-            exit(0);
+            exit(0); 
         }
     }
 }
