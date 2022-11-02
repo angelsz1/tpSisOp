@@ -52,6 +52,10 @@ int main(int argc, char *argv[])
         sem_post(finRama);
         sem_wait(continuar);
         sem_post(continuarUltimo);
+        
+        sem_close(finRama);
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
       else if( !fork() ) //bis2
       {
@@ -60,11 +64,18 @@ int main(int argc, char *argv[])
         sem_post(finRama);
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(finRama);
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
       else //sigue nieto1
       {
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
     }
     else if( !fork() )//nieto2
@@ -78,6 +89,10 @@ int main(int argc, char *argv[])
         sem_post(finRama);
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(finRama);
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
       else if( !fork() ) //bis4
       {
@@ -86,17 +101,27 @@ int main(int argc, char *argv[])
         sem_post(finRama);
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(finRama);
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
       else //sigue nieto2
       {
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
     }
     else //sigue hijo1
     {
       sem_wait(continuar);
       sem_post(continuarUltimo);
+
+      sem_close(continuar);
+      sem_close(continuarUltimo);
     }
   }
   else if ( !fork() ) //hijo2
@@ -114,6 +139,10 @@ int main(int argc, char *argv[])
         sem_post(finRama);
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(finRama);
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
       //no hay else con sem_wait(continuar), es el zombie
     }
@@ -126,7 +155,10 @@ int main(int argc, char *argv[])
         informeDeProceso(4, "Zombie");
 
         sem_post(finRama);
+        
         //no hace sem_wait(continuar) por ser zombie
+
+        sem_close(finRama);
       }
       else if ( !fork() )//bisnieto7
       {
@@ -137,23 +169,34 @@ int main(int argc, char *argv[])
         for(i=0; i<6; i++)
           sem_wait(finRama);
 
+        sem_close(finRama);
+        sem_unlink("finRamaDeArbol");
+
         printf("Ingrese una tecla para finalizar:");
         char fin;
         scanf("%c", &fin);
 
         for(i=0; i<10; i++)
           sem_post(continuar);
+
+          sem_close(continuar);
       }
       else //sigue nieto 4
       {
         sem_wait(continuar);
         sem_post(continuarUltimo);
+
+        sem_close(continuar);
+        sem_close(continuarUltimo);
       }
     }
     else //sigue hijo2
     {
       sem_wait(continuar);
       sem_post(continuarUltimo);
+
+      sem_close(continuar);
+      sem_close(continuarUltimo);
     }
   }
   else //padre
@@ -162,9 +205,9 @@ int main(int argc, char *argv[])
     for(i=0; i<10; i++)
       sem_wait(continuarUltimo);
 
-    sem_destroy(finRama);
-    sem_destroy(continuar);
-    sem_destroy(continuarUltimo);
+    sem_unlink("continuarProceso");
+    sem_close(continuarUltimo);
+    sem_unlink("continuarUltimoProceso");
   }
 
   return 0;
