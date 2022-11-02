@@ -16,6 +16,21 @@
                       "ID;DESCRIPCION;PRECIO;COSTO;STOCK\n"             \
                       "1;Harina Blancaflor;70;40;0;\n"
 
+void daemon_config()
+{
+    int pid;
+
+    pid = fork();
+    if (pid > 0)
+    {
+        exit(0); // Finalizamos el proceso padre. Logrando que el proceso que creamos se ejecute en segundo plano
+    }
+    else if (pid < 0)
+    {
+        exit(1);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     // Ignoro CTRL + C
@@ -38,6 +53,8 @@ int main(int argc, char *argv[])
         printf("Se requiere como parametro la ruta del archivo de productos. Para obtener ayuda agregar el parametro -h o --help\n");
         return -1;
     }
+
+     daemon_config();
 
     char *path = argv[1];
 
@@ -89,6 +106,9 @@ int main(int argc, char *argv[])
             // Abro FIFO2 para escribir solamente mediante la cadena textoServidor y luego lo cierro
             // Entonces el cliente si detecta que lo que habia en el FIFO era una Q entonces debe cerrarse
             fifo_2 = open(FIFO2, O_WRONLY);
+
+            remove("/tmp/FIFO1");
+
             write(fifo_2, "Q", 2);
             close(fifo_2);
 

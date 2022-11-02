@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
             // Si se escribio QUIT se debe cerrar el cliente tambien
             if (textoServidor[0] == 'Q')
             {
+                remove("/tmp/FIFO2");
+
                 return 0;
             }
 
