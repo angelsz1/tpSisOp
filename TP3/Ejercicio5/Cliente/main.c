@@ -58,13 +58,14 @@ int main(int argc, char *argv[])
     if (argc > 1 && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
     {
         ayuda();
-        return 1;
+        return 0;
     }
 
     if (argc < 4) 
     {
         puts(COLOR_RED"Argumentos mal pasados"COLOR_RESET);
         ayuda();
+        return 1;
     }
 
     server_socket = socket_create();

@@ -1,5 +1,5 @@
 // #APL N. 3
-// #EJERCICIO 3
+// #EJERCICIO 5
 // #INTEGRANTES:
 //       #Carballo, Facundo Nicolas (DNI: 42774931)
 //       #Garcia Burgio, Matias Nicolas (DNI: 42649117)
@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
     {
         puts(COLOR_RED "Argumentos mal ingresados" COLOR_RESET);
         ayuda();
+        return 1;
     }
 
     daemon_config();
