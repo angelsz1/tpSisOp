@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
+        sem_close(semCliente);
+        sem_unlink("/cliente");
         printf(RED"STATUS CODE: 503\n");
         printf(RED"El server no se encuentra activo\n"RESET);
         exit(-1);
@@ -63,6 +65,8 @@ int main(int argc, char* argv[])
         if(value == 1) {
             printf(RED"STATUS CODE: 503\n");
             printf(RED"El server no se encuentra activo\n"RESET);
+            sem_close(semCliente);
+            sem_unlink("/cliente");
             exit(-1);
         }
 
@@ -118,7 +122,7 @@ void toUpper(char* s) {
 
 void validarParametros(int cantidadParametros, char* parametros[]) {
     if (cantidadParametros > 2) {
-        printf("./cliente no soporta %d parametros", cantidadParametros);
+        printf("./cliente no soporta %d parametros\n", cantidadParametros-1);
         exit(0);
     }
 

@@ -91,8 +91,9 @@ int main(int argc, char* argv[])
 
         } else {
             respuesta->status = 400;
-            strcpy(respuesta->contenido,  YELLOW"BAD REQUEST:\n"RESET);
+            strcpy(respuesta->contenido,  YELLOW"BAD REQUEST:\n");
             strcat(respuesta->contenido, mensajeError);
+            strcat(respuesta->contenido, ""RESET);
         }
         sem_post(semRespuesta);
     }
@@ -416,7 +417,7 @@ void ayuda() {
 
 void validarParametros(int cantidadParametros, char* parametros[]) {
     if (cantidadParametros > 2) {
-        printf("%s no soporta %d parametros", parametros[0], cantidadParametros);
+        printf("%s no soporta %d parametros\n", parametros[0], cantidadParametros-1);
         exit(0);
     }
 
