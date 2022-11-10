@@ -24,6 +24,8 @@ void crearServidor();
 void cerrarServidor(char* pedido, Respuesta* respuesta, int shmid, sem_t* semComando, sem_t* semRespuesta, Lista* listaGatos);
 void signalHandler(int signal);
 int crearMemoriaCompartida();
+void ayuda();
+void validarParametros(int cantidadParametros, char* parametros[]);
 
 void alta(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
 void baja(Lista* listaGatos, Pedido* pedido, Respuesta* respuesta);
@@ -44,8 +46,10 @@ int serverActivo = 1;
 sem_t* semComando;
 sem_t* semRespuesta;
 
-int main()
+int main(int argc, char* argv[])
 {
+    validarParametros(argc, argv);
+
     semComando = sem_open("/comando", O_CREAT | O_EXCL, 0666, 0);
     semRespuesta = sem_open("/respuesta", O_CREAT | O_EXCL, 0666, 0);
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
@@ -375,4 +379,54 @@ int parsearPedido(char* texto, Pedido* pedido, char* error) {
         return 0;
     
     return 1;
+}
+
+void ayuda() {
+    puts(YELLOW"\nDESCRIPCION"RESET);
+    puts("Con este script crearas un servidor que estara escuchando peticiones de un cliente a traves de memoria compartida.");
+    puts("Solo acepta peticiones de un cliente a la vez.");
+    puts(YELLOW"\nEJECUCION"RESET);
+    puts("./servidor");
+    puts(YELLOW"\nDETENCION"RESET);
+    puts("Para detener el servidor debera enviarle una senial 'SIGUSR1 junto al process id que sera informado a la hora de ejecutar':");
+    puts("kill -SIGUSR1 <process-id>");
+    puts(YELLOW"\nUSO"RESET);
+    puts("El cliente tiene 3 tipos de peticiones para hacerle a este servidor:");
+    puts(CYAN"- ALTA:"RESET);
+    printf("\t● ALTA ");
+    printf(GREEN"[nombre] [raza] [sexo] [condicion]\n"RESET);
+    puts(CYAN"- BAJA:"RESET);
+    printf("\t● BAJA ");
+    printf(GREEN"[nombre]\n"RESET);
+    puts(CYAN"- CONSULTA:"RESET);
+    puts("\t● CONSULTA");
+    printf("\t● CONSULTA ");
+    printf(GREEN"[nombre]\n"RESET);
+    puts(CYAN"- SALIR\n"RESET);
+    puts(YELLOW"PARAMETROS"RESET);
+    printf(GREEN"[nombre]\t"RESET);
+    printf("Nombre del gato (MAXIMO 25 CARACTERES)\n");
+    printf(GREEN"[raza]\t\t"RESET);
+    printf("Raza del gato (MAXIMO 25 CARACTERES)\n");
+    printf(GREEN"[sexo]\t\t"RESET);
+    printf("Sexo del gato (M o F) (SE DEBE COLOCAR UN SOLO CARACTER)\n");
+    printf(GREEN"[condicion]\t"RESET);
+    printf("Castrado (CA) o Sin Castrar (SC) (SE DEBEN COLOCAR SOLO 2 CARACTERES)\n\n");
+}
+
+void validarParametros(int cantidadParametros, char* parametros[]) {
+    if (cantidadParametros > 2) {
+        printf("%s no soporta %d parametros", parametros[0], cantidadParametros);
+        exit(0);
+    }
+
+    if(cantidadParametros == 2) {
+        if (strcmp(parametros[1],"-help") == 0 || strcmp(parametros[1], "-h") == 0 || strcmp(parametros[1], "--help") == 0) {
+            ayuda();
+            exit(1);
+        } else {
+            printf(YELLOW"Argumento invalido: %s\n"RESET, parametros[1]);
+            exit(0); 
+        }
+    }
 }

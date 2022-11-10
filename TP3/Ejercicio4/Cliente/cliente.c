@@ -27,6 +27,14 @@ int main(int argc, char* argv[])
 
     sem_t* semComando = sem_open("/comando", 0666, 0);
     sem_t* semRespuesta = sem_open("/respuesta", 0666, 0);
+    sem_t* semCliente = sem_open("/cliente", O_CREAT | O_EXCL, 0666, 0);
+
+    if(semCliente == SEM_FAILED) {
+        sem_close(semCliente);
+        printf(YELLOW"El cliente ya se encuentra activo\n"RESET);
+        exit(-1);
+    }
+
     if (semComando == SEM_FAILED || semRespuesta == SEM_FAILED) {
         sem_close(semComando);
         sem_close(semRespuesta);
@@ -48,6 +56,16 @@ int main(int argc, char* argv[])
     toUpper(pedido);
 
     while (strcmp(pedido, "SALIR") != 0) {
+        
+        int value;
+        sem_getvalue(semComando, &value);
+        
+        if(value == 1) {
+            printf(RED"STATUS CODE: 503\n");
+            printf(RED"El server no se encuentra activo\n"RESET);
+            exit(-1);
+        }
+
         sem_post(semComando);
         sem_wait(semRespuesta);
 
@@ -67,6 +85,8 @@ int main(int argc, char* argv[])
 
     sem_close(semComando);
     sem_close(semRespuesta);
+    sem_close(semCliente);
+    sem_unlink("/cliente");
 
     return 0;
 }

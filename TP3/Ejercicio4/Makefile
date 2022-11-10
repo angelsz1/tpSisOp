@@ -7,8 +7,6 @@ cliente :
 servidor : 
 	cd Servidor/ && make
 
-
-
 clean : 
 	cd Cliente/ && make clean
 	cd ..
