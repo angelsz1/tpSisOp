@@ -61,7 +61,7 @@ char server_analyze_query(const Query *p_query)
         strcmp(p_query->type, "ALTA") == 0 &&
         strlen(p_query->name) != 0 &&
         strlen(p_query->race) != 0 &&
-        (p_query->sex == 'M' || p_query->sex == 'H') &&
+        (p_query->sex == 'M' || p_query->sex == 'F') &&
         (strcmp(p_query->sexCondition, "CA") == 0 || strcmp(p_query->sexCondition, "SC") == 0))
     {
         return 'A';
@@ -106,7 +106,7 @@ void server_read_query(Client *p_client)
         server_query(&t_query, p_client);
         break;
     case 'N':
-        write(p_client->socket_number, "Consulta Invalida...", sizeof("Consulta Invalida"));
+        write(p_client->socket_number, "Consulta Invalida...", 512);
         break;
     }
 }

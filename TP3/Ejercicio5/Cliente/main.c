@@ -7,30 +7,33 @@
 //       #Povoli Olivera, Victor (DNI: 43103780)
 //       #Szust, Ángel Elías (DNI: 43098495)
 
-#include <netdb.h> 
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <string.h> 
-#include <sys/socket.h> 
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include "socket.h"
 
-void ayuda() {
-    puts(COLOR_GREEN"---------------------------------------- AYUDA DEL SCRIPT ----------------------------------------"COLOR_RESET);
+void toUpper(char *s);
+
+void ayuda()
+{
+    puts(COLOR_GREEN "---------------------------------------- AYUDA DEL SCRIPT ----------------------------------------" COLOR_RESET);
     puts("Con este script podras solicitar informacion al servidor del refugio de gatos");
     puts("Para solicitar informacion usted debera invocar al script de la siguiente forma:");
-    puts(COLOR_YELLOW"- ALTA:"COLOR_RESET);
+    puts(COLOR_YELLOW "- ALTA:" COLOR_RESET);
     puts("       ./main [Direccion IP] [Puerto] ALTA [nombre] [raza] [SEXO] [Condicion Sexual]");
-    puts(COLOR_YELLOW"- BAJA:"COLOR_RESET);
+    puts(COLOR_YELLOW "- BAJA:" COLOR_RESET);
     puts("       ./main [Direccion IP] [Puerto] BAJA [nombre]");
-    puts(COLOR_YELLOW"- CONSULTA:"COLOR_RESET);
+    puts(COLOR_YELLOW "- CONSULTA:" COLOR_RESET);
     puts("       ./main [Direccion IP] [Puerto] CONSULTA");
     puts("       ./main [Direccion IP] [Puerto] CONSULTA [nombre]");
-    puts(COLOR_YELLOW"Referencias:"COLOR_RESET);
+    puts(COLOR_YELLOW "Referencias:" COLOR_RESET);
     puts("[Direccion IP] Direccion IP donde se encuentra el servidor");
     puts("[Puerto] Puerto en el que se encuentra el servidor");
     puts("[nombre] Nombre del gato (MAXIMO 50 CARACTERES)");
@@ -40,30 +43,29 @@ void ayuda() {
     puts("Aclaraciones:");
     puts("La consulta sin parametros te mostrara el registro completo de gatos que se encuentran en el refugio");
     puts("La consulta que lleva el parametro [nombre] te mostrara la informacion del gato buscado si es que existe");
-    puts(COLOR_YELLOW"IMPORTANTE:"COLOR_RESET);
-    puts("Cada parametro debera estar separado por un espacio en blaco.");    
-    puts(COLOR_GREEN"--------------------------------------------------------------------------------------------------"COLOR_RESET);
-
+    puts(COLOR_YELLOW "IMPORTANTE:" COLOR_RESET);
+    puts("Cada parametro debera estar separado por un espacio en blaco.");
+    puts(COLOR_GREEN "--------------------------------------------------------------------------------------------------" COLOR_RESET);
 }
 
-char buf_tx[512];     
+char buf_tx[512];
 char buf_rx[512];
- 
- 
-int main(int argc, char *argv[]) 
-{ 
+
+int main(int argc, char *argv[])
+{
     int server_socket;
-    struct sockaddr_in server_address; 
-    
+    struct sockaddr_in server_address;
+    char pedido[512];
+
     if (argc > 1 && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
     {
         ayuda();
         return 0;
     }
 
-    if (argc < 4) 
+    if (argc < 3)
     {
-        puts(COLOR_RED"Argumentos mal pasados"COLOR_RESET);
+        puts(COLOR_RED "Argumentos mal pasados" COLOR_RESET);
         ayuda();
         return 1;
     }
@@ -71,28 +73,52 @@ int main(int argc, char *argv[])
     server_socket = socket_create();
     server_address = socket_config(argv[1], argv[2]);
 
-    socket_connect(server_socket, server_address);    
-      
-    // Copiamos en el buffer el mensaje a enviar
-    strcpy(buf_tx, argv[3]);
-    strcat(buf_tx, " ");
-    
-    int i = 4;
-    while(i < argc) {
-        strcat(buf_tx, argv[i]);
-        i++;
-        if (i != argc) strcat(buf_tx, " ");
+    socket_connect(server_socket, server_address);
+
+    do
+    {
+        printf("¿Que accion desea realizar?\n");
+        printf("ALTA [nombre] [raza] [M/F] [CA/SC]\n");
+        printf("BAJA [nombre]\n");
+        printf("CONSULTA [?nombre]\n");
+        printf("SALIR\n\n");
+        fflush(stdin);
+        fgets(pedido, 200, stdin);
+        toUpper(pedido);
+
+        if (strcmp(pedido, "SALIR") != 0)
+        {
+            // Copiamos en el buffer el mensaje a enviar
+            strcpy(buf_tx, pedido);
+
+            // Escribimos el mensaje
+            write(server_socket, buf_tx, sizeof(buf_tx));
+
+            // Leemos la respuesta del servidor
+            read(server_socket, buf_rx, sizeof(buf_rx));
+
+            printf("Respuesta del servidor: \n%s\n", buf_rx);
+
+            printf(COLOR_YELLOW"----------------------------------------------\n"COLOR_RESET);
+        }
+
+    } while (strcmp(pedido, "SALIR") != 0);
+
+    close(server_socket);
+}
+
+void toUpper(char *s)
+{
+    while (*s != '\0' && *s != '\n')
+    {
+        if (*s >= 'a' && *s <= 'z')
+        {
+            *s = *s - 32;
+        }
+        s++;
     }
-    
-
-    // Escribimos el mensaje
-    write(server_socket, buf_tx, sizeof(buf_tx));     
-    
-    // Leemos la respuesta del servidor
-    read(server_socket, buf_rx, sizeof(buf_rx));
-
-
-    printf("Respuesta del servidor: \n%s\n", buf_rx);
-   
-    close(server_socket); 
-} 
+    if (*s == '\n')
+    {
+        *s = '\0';
+    }
+}
