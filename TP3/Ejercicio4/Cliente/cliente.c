@@ -14,20 +14,26 @@
 #include <string.h>
 #include <semaphore.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "../global.h"
 
 int crearMemoriaCompartida();
 void toUpper(char* s);
 void ayuda();
 void validarParametros(int cantidadParametros, char* parametros[]);
+void atraparSeniales();
+void signalHandler(int signal);
+
+sem_t* semCliente;
 
 int main(int argc, char* argv[])
 {
     validarParametros(argc, argv);
+    atraparSeniales();
 
     sem_t* semComando = sem_open("/comando", 0666, 0);
     sem_t* semRespuesta = sem_open("/respuesta", 0666, 0);
-    sem_t* semCliente = sem_open("/cliente", O_CREAT | O_EXCL, 0666, 0);
+    semCliente = sem_open("/cliente", O_CREAT | O_EXCL, 0666, 0);
 
     if(semCliente == SEM_FAILED) {
         sem_close(semCliente);
@@ -168,4 +174,18 @@ void ayuda() {
     puts("La consulta sin parametros te mostrara el registro completo de gatos que se encuentran en el refugio");
     puts("La consulta que lleva el parametro [nombre] te mostrara la informacion del gato buscado si es que existe");    
     puts("------------------------------------------------------------------------");
+}
+
+void atraparSeniales() {
+    if (signal(SIGINT, signalHandler) == SIG_ERR)
+        printf("No se pudo capturar la senal SIGUSR1\n");
+}
+
+void signalHandler(int signal)
+{
+    if (signal == SIGINT) {
+        sem_close(semCliente);
+        sem_unlink("/cliente");
+        exit(1);
+    }
 }
