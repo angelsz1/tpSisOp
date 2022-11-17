@@ -26,19 +26,21 @@ void ayuda()
     puts(COLOR_GREEN "---------------------------------------- AYUDA DEL SCRIPT ----------------------------------------" COLOR_RESET);
     puts("Con este script podras solicitar informacion al servidor del refugio de gatos");
     puts("Para solicitar informacion usted debera invocar al script de la siguiente forma:");
+    puts(COLOR_GREEN"       ./cliente [Direccion IP] [Puerto]"COLOR_RESET);
+    puts("Las consultas tienen el siguiente formato:");
     puts(COLOR_YELLOW "- ALTA:" COLOR_RESET);
-    puts("       ./main [Direccion IP] [Puerto] ALTA [nombre] [raza] [SEXO] [Condicion Sexual]");
+    puts("        ALTA [nombre] [raza] [M/F] [CA/SC]");
     puts(COLOR_YELLOW "- BAJA:" COLOR_RESET);
-    puts("       ./main [Direccion IP] [Puerto] BAJA [nombre]");
+    puts("        BAJA [nombre]");
     puts(COLOR_YELLOW "- CONSULTA:" COLOR_RESET);
-    puts("       ./main [Direccion IP] [Puerto] CONSULTA");
-    puts("       ./main [Direccion IP] [Puerto] CONSULTA [nombre]");
+    puts("        CONSULTA");
+    puts("        CONSULTA [nombre]");
     puts(COLOR_YELLOW "Referencias:" COLOR_RESET);
     puts("[Direccion IP] Direccion IP donde se encuentra el servidor");
     puts("[Puerto] Puerto en el que se encuentra el servidor");
     puts("[nombre] Nombre del gato (MAXIMO 50 CARACTERES)");
     puts("[raza]   Raza del gato (MAXIMO 50 CARACTERES)");
-    puts("[SEXO]   Sexo del gato (M o F) (SE DEBE COLOCAR UN SOLO CARACTER)");
+    puts("[M/F]   Sexo del gato (M o F) (SE DEBE COLOCAR UN SOLO CARACTER)");
     puts("[Condicion Sexual] Castrado (CA) o Sin Castrar (SC) (SE DEBEN COLOCAR SOLO 2 CARACTERES)");
     puts("Aclaraciones:");
     puts("La consulta sin parametros te mostrara el registro completo de gatos que se encuentran en el refugio");
@@ -75,6 +77,16 @@ int main(int argc, char *argv[])
 
     socket_connect(server_socket, server_address);
 
+    // Leemos la respuesta del servidor
+    read(server_socket, buf_rx, sizeof(buf_rx));
+
+    printf("%s\n", buf_rx);
+    
+    if (strcmp(buf_rx, "SERVIDOR COLAPSADO.") == 0)
+    {
+        return 1;
+    }
+
     do
     {
         printf("¿Que accion desea realizar?\n");
@@ -99,7 +111,7 @@ int main(int argc, char *argv[])
 
             printf("Respuesta del servidor: \n%s\n", buf_rx);
 
-            printf(COLOR_YELLOW"----------------------------------------------\n"COLOR_RESET);
+            printf(COLOR_YELLOW "----------------------------------------------\n" COLOR_RESET);
         }
 
     } while (strcmp(pedido, "SALIR") != 0);

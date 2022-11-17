@@ -36,19 +36,18 @@ void ayuda()
 {
     puts(COLOR_GREEN "-------------------------------------------------- AYUDA DEL SCRIPT --------------------------------------------------" COLOR_RESET);
     puts("Con este script crearas un servidor que estara escuchando peticiones de un cliente");
+    puts("Para ejecutarlo de manera correcta deberas ejecutar el siguiente comando:");
+    puts(COLOR_GREEN "./servidor [PUERTO]" COLOR_RESET);
+    puts("EJEMPLO:");
+    puts(COLOR_GREEN"./servidor 5555"COLOR_RESET);
     puts("El cliente tiene 3 tipos de peticiones para hacerle a este servidor:");
     puts(COLOR_YELLOW "- ALTA:" COLOR_RESET);
-    puts("       - Persiste la informacion de un gato en logs.txt (Si el gato ya existe te informara por pantalla)");
+    puts("       - Persiste la informacion de un gato en gatos.txt (Si el gato ya existe te informara por pantalla)");
     puts(COLOR_YELLOW "- BAJA:" COLOR_RESET);
-    puts("       - Elimina la informacion de un gato en logs.txt (Si el gato no existiese te informara por pantalla)");
+    puts("       - Elimina la informacion de un gato en gatos.txt (Si el gato no existiese te informara por pantalla)");
     puts(COLOR_YELLOW "- CONSULTA:" COLOR_RESET);
-    puts("       - Devuelve la informacion de los gatos que se encuentran en logs.txt");
+    puts("       - Devuelve la informacion de los gatos que se encuentran en gatos.txt");
     puts("       - Devuelve la informacion de un gato en especifico (Si el gato no existiese te informara por pantalla)");
-    puts(COLOR_YELLOW "EJECUCION:" COLOR_RESET);
-    puts("Para ejecutarlo de manera correcta deberas ejecutar el siguiente comando:");
-    puts("./main [PUERTO]");
-    puts(COLOR_YELLOW "EJEMPLO:" COLOR_RESET);
-    puts("./main 5555");
     puts(COLOR_YELLOW "IMPORTANTE:" COLOR_RESET);
     puts("       - De querer finalizar el proceso tendran que hacerlo atraves de la senial SIGUSR1 (haciendole un kill -SIGUSR1 [PID])");
     puts(COLOR_GREEN "----------------------------------------------------------------------------------------------------------------------" COLOR_RESET);
@@ -82,8 +81,12 @@ void daemon_config()
     signal(SIGUSR1, &handle_signal);
 
     pid = fork();
+
+
+
     if (pid > 0)
     {
+        printf("PID: %d\n", pid);
         exit(0); // Finalizamos el proceso padre. Logrando que el proceso que creamos se ejecute en segundo plano
     }
     else if (pid < 0)
@@ -153,6 +156,9 @@ void *handle_thread(void *p_socket_client)
     Client client;
     char buffer_client[SIZE_QUERY];
 
+    strcpy(client.buffer_client, "CONEXION EXITOSA.");
+    write(socket_client, client.buffer_client, strlen(client.buffer_client));
+
     sem_t *sem_file = sem_open("socket-rw-file", O_CREAT, 0666, 1);
 
     if (socket_client < 0)
@@ -191,8 +197,10 @@ void *handle_thread(void *p_socket_client)
 
 void *handle_thread_error(void *p_socket_client)
 {
-    Client client = *((Client *)p_socket_client);
+    int socket_client = *((int *)p_socket_client);
+    // Client client = *((Client *)p_socket_client);
+    Client client;
 
     strcpy(client.buffer_client, "SERVIDOR COLAPSADO.");
-    write(client.socket_number, client.buffer_client, strlen(client.buffer_client));
+    write(socket_client, client.buffer_client, strlen(client.buffer_client));
 }

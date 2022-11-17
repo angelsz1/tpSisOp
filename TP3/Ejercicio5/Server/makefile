@@ -1,29 +1,10 @@
-# all: socket main
+all: servidor
 
-# main: main.o Socket/socket.o
-# 	gcc -o main main.o Socket/socket.o
+servidor: servidor.o socket.o server.o cat.o shared_memory.o query.o sem.o client.o
+	@gcc -o servidor servidor.o socket.o server.o cat.o shared_memory.o query.o sem.o client.o -pthread
 
-# main.o: main.c Socket/socket.h
-# 	gcc -c main.c
-
-# socket:
-# 	cd Socket/ && make
-# 	cd ..
-
-# clean:
-# 	rm	-f *.o
-
-# cleanall:
-# 	rm	-f *.o main
-
-
-all: main
-
-main: main.o socket.o server.o cat.o shared_memory.o query.o sem.o client.o
-	@gcc -o main main.o socket.o server.o cat.o shared_memory.o query.o sem.o client.o -pthread
-
-main.o: main.c socket.h server.h
-	gcc -c main.c -pthread
+servidor.o: servidor.c socket.h server.h
+	gcc -c servidor.c -pthread
 
 socket.o: socket.c
 	gcc -c socket.c -pthread
@@ -50,4 +31,4 @@ clean:
 	rm	-f *.o
 
 cleanall:
-	rm	-f *.o main
+	rm	-f *.o servidor

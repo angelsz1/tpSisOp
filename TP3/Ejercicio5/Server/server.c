@@ -143,7 +143,7 @@ int server_up(const Query *p_query, Client *p_client)
 {
     char res[SIZE_QUERY];
     strcpy(res, p_query->name);
-    FILE *arch = fopen("logs.txt", "r+");
+    FILE *arch = fopen("../gatos.txt", "r+"); // antes solamente estaba logs.txt
 
     if (!aux_check_name_exist(p_query->name, arch))
     {
@@ -163,7 +163,7 @@ int server_up(const Query *p_query, Client *p_client)
 int server_down(const Query *p_query, Client *p_client)
 {
     Cat cat;
-    FILE *arch = fopen("logs.txt", "r+");
+    FILE *arch = fopen("../gatos.txt", "r+"); // antes solamente estaba logs.txt
     char res[SIZE_QUERY];
     strcpy(res, p_query->name);
     if (!aux_check_name_exist(p_query->name, arch))
@@ -185,7 +185,7 @@ int server_down(const Query *p_query, Client *p_client)
 int server_query(const Query *p_query, Client *p_client)
 {
     Cat cat;
-    FILE *arch = fopen("logs.txt", "r+");
+    FILE *arch = fopen("../gatos.txt", "r+");
 
     if (strlen(p_query->name) == 0)
     {

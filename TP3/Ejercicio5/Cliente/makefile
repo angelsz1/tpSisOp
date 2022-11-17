@@ -1,10 +1,10 @@
-all: main
+all: cliente
 
-main: main.o socket.o
-	gcc -o main main.o socket.o
+cliente: cliente.o socket.o
+	gcc -o cliente cliente.o socket.o
 
-main.o: main.c socket.h
-	gcc -c main.c
+cliente.o: cliente.c socket.h
+	gcc -c cliente.c
 
 socket.o:
 	gcc -c socket.c
@@ -13,4 +13,4 @@ clean:
 	rm	-f *.o
 
 cleanall:
-	rm	-f *.o main
+	rm	-f *.o cliente
