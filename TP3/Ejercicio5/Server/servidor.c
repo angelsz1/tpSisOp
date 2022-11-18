@@ -178,6 +178,7 @@ void *handle_thread(void *p_socket_client)
         else if (len_rx == 0)
         {
             close(socket_client);
+            thread_number++;
             break;
         }
         else

@@ -49,7 +49,7 @@ int cat_delete(const Cat *p_cat, FILE *arch)
         }
     }
 
-    rename("tempCat.txt", "logs.txt");
+    rename("tempCat.txt", "../gatos.txt");
     fclose(arch_temp);
 }
 
