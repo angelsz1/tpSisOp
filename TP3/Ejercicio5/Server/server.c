@@ -30,7 +30,6 @@ void server_create()
         exit(1);
     }
 
-    //  server_wait_query(shared_memory_create(&id));
 }
 
 void server_wait_query(Client *p_client)
@@ -51,8 +50,6 @@ void server_wait_query(Client *p_client)
     }
 
     // server_read_query(p_client, mutex_memory, are_response);
-
-
 }
 
 char server_analyze_query(const Query *p_query)
@@ -106,7 +103,9 @@ void server_read_query(Client *p_client)
         server_query(&t_query, p_client);
         break;
     case 'N':
-        write(p_client->socket_number, "Consulta Invalida...", 512);
+        strcpy(p_client->buffer_client, "Consulta Invalida...");
+        // write(p_client->socket_number, "Consulta Invalida...", 512);
+        write(p_client->socket_number, p_client->buffer_client, sizeof(p_client->buffer_client));
         break;
     }
 }
@@ -145,6 +144,13 @@ int server_up(const Query *p_query, Client *p_client)
     strcpy(res, p_query->name);
     FILE *arch = fopen("../gatos.txt", "r+"); // antes solamente estaba logs.txt
 
+    if (!arch)
+    {
+        strcpy(p_client->buffer_client, "No se pudo abrir el archivo gatos.txt");
+        write(p_client->socket_number, p_client->buffer_client, sizeof(p_client->buffer_client));
+        return 1;
+    }
+
     if (!aux_check_name_exist(p_query->name, arch))
     {
         server_write(p_query, arch);
@@ -156,7 +162,7 @@ int server_up(const Query *p_query, Client *p_client)
     }
 
     write(p_client->socket_number, res, sizeof(res));
-    
+
     fclose(arch);
 }
 
@@ -164,6 +170,12 @@ int server_down(const Query *p_query, Client *p_client)
 {
     Cat cat;
     FILE *arch = fopen("../gatos.txt", "r+"); // antes solamente estaba logs.txt
+    if (!arch)
+    {
+        strcpy(p_client->buffer_client, "No se pudo abrir el archivo gatos.txt");
+        write(p_client->socket_number, p_client->buffer_client, sizeof(p_client->buffer_client));
+        return 1;
+    }
     char res[SIZE_QUERY];
     strcpy(res, p_query->name);
     if (!aux_check_name_exist(p_query->name, arch))
@@ -186,6 +198,13 @@ int server_query(const Query *p_query, Client *p_client)
 {
     Cat cat;
     FILE *arch = fopen("../gatos.txt", "r+");
+
+    if (!arch)
+    {
+        strcpy(p_client->buffer_client, "No se pudo abrir el archivo gatos.txt");
+        write(p_client->socket_number, p_client->buffer_client, sizeof(p_client->buffer_client));
+        return 1;
+    }
 
     if (strlen(p_query->name) == 0)
     {

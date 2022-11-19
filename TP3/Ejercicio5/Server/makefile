@@ -1,7 +1,7 @@
 all: servidor
 
-servidor: servidor.o socket.o server.o cat.o shared_memory.o query.o sem.o client.o
-	@gcc -o servidor servidor.o socket.o server.o cat.o shared_memory.o query.o sem.o client.o -pthread
+servidor: servidor.o socket.o server.o cat.o query.o sem.o client.o
+	@gcc -o servidor servidor.o socket.o server.o cat.o query.o sem.o client.o -pthread
 
 servidor.o: servidor.c socket.h server.h
 	gcc -c servidor.c -pthread
@@ -14,9 +14,6 @@ server.o: server.c server.h
 
 cat.o: cat.c query.h
 	gcc -c cat.c -pthread
-
-shared_memory.o: shared_memory.c query.h
-	gcc -c shared_memory.c -pthread
 
 query.o: query.c
 	gcc -c query.c -pthread

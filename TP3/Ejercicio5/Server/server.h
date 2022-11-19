@@ -13,7 +13,6 @@
 #include "cat.h"
 #include "query.h"
 #include "sem.h"
-#include "shared_memory.h"
 #include "cliente.h"
 
 void server_create();
