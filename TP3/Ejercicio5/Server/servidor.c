@@ -191,7 +191,6 @@ void *handle_thread(void *p_socket_client)
             server_read_query(&client);
             sem_post(sem_file);
 
-            thread_number++;
         }
     }
 }
