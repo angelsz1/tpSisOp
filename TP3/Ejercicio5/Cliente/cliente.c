@@ -106,8 +106,16 @@ int main(int argc, char *argv[])
             // Escribimos el mensaje
             write(server_socket, buf_tx, sizeof(buf_tx));
 
+            // Limpiamos el buffer
+            strcpy(buf_rx, "");
+
             // Leemos la respuesta del servidor
             read(server_socket, buf_rx, sizeof(buf_rx));
+
+            if (strcmp(buf_rx, "") == 0) {
+                printf("Servidor Cerrado.\n");
+                break;
+            }
 
             printf("Respuesta del servidor: \n%s\n", buf_rx);
 
