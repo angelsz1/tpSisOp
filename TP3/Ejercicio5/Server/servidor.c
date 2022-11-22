@@ -114,6 +114,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    sem_t *sem_file = sem_open("socket-rw-file", O_CREAT | O_EXCL, 0666, 1);
+
+    if (sem_file == SEM_FAILED) {
+        sem_close(sem_file);
+        printf(COLOR_YELLOW"El servidor ya se encuentra activo\n"COLOR_RESET);
+        exit(-1);
+    }
+
     daemon_config();
 
     // Creamos el socket
@@ -126,8 +134,6 @@ int main(int argc, char *argv[])
     socket_listen(socket_server, &server_address);
 
     len = sizeof(client_address);
-
-    sem_t *sem_file = sem_open("socket-rw-file", O_CREAT, 0666, 1);
 
     while (active)
     {
